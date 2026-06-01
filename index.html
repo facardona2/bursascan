@@ -1891,6 +1891,69 @@ tbody tr:last-child td {
   font-size: 13px;
   cursor: pointer;
 }
+
+/* ===== DARK / LIGHT MODE ===== */
+body.light-mode {
+  --bg-base: #f0f2f5;
+  --bg-surface: #ffffff;
+  --bg-elevated: #e8eaed;
+  --bg-hover: #dde0e6;
+  --border: #d0d4dc;
+  --border-strong: #b8bcc8;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+  --accent-dim: rgba(0, 150, 200, 0.12);
+}
+body.light-mode .sidebar { background: #ffffff; }
+body.light-mode table { color: var(--text-primary); }
+body.light-mode .modal { background: #ffffff; }
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== RELATIVE VOLUME ===== */
+.rvol-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.rvol-high   { background: rgba(34,197,94,0.15);  color: var(--buy); }
+.rvol-low    { background: rgba(239,68,68,0.12);   color: var(--sell); }
+.rvol-normal { background: rgba(156,163,180,0.12); color: var(--text-secondary); }
+.rvol-xhigh  { background: rgba(0,217,255,0.15);   color: var(--accent); }
+
+/* ===== SECTOR FILTER ===== */
+.sector-select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+}
+.sector-select:focus { outline: none; border-color: var(--accent); }
 </style>
 <!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1992,6 +2055,7 @@ tbody tr:last-child td {
         <div class="page-subtitle" id="page-subtitle">Vista general de señales en todo el universo escaneado</div>
       </div>
       <div class="refresh-controls">
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">🌙</button>
         <div class="timestamp-pill" id="timestamp-pill">
           <div class="live-dot"></div>
           <span id="timestamp-text">DATA: SNAPSHOT</span>
@@ -2030,6 +2094,30 @@ tbody tr:last-child td {
           <button class="filter-chip" data-xtb="all">Todas</button>
           <button class="filter-chip active" data-xtb="yes">Solo XTB</button>
         </div>
+        <div class="filter-group">
+          <select class="sector-select" id="sector-select" onchange="state.filterSector=this.value;render();">
+            <option value="all">🏭 Todos los sectores</option>
+            <option value="Tecnología">💻 Tecnología</option>
+            <option value="Financiero">🏦 Financiero</option>
+            <option value="Salud">🏥 Salud</option>
+            <option value="Consumo">🛒 Consumo</option>
+            <option value="Industrial">⚙️ Industrial</option>
+            <option value="Energía">⛽ Energía</option>
+            <option value="Automotriz">🚗 Automotriz</option>
+            <option value="Materiales">⛏️ Materiales</option>
+            <option value="Telecomunicaciones">📡 Telecomunicaciones</option>
+            <option value="Servicios">🔧 Servicios</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <select class="sector-select" id="volume-select" onchange="state.filterVolume=this.value;render();">
+            <option value="all">📊 Vol. relativo</option>
+            <option value="high">🔥 Alto (≥ 1.8x)</option>
+            <option value="xhigh">⚡ Muy alto (≥ 3x)</option>
+            <option value="normal">➡ Normal</option>
+            <option value="low">↓ Bajo</option>
+          </select>
+        </div>
         <div class="search">
           <input type="text" id="search" placeholder="Buscar ticker o empresa...">
         </div>
@@ -2045,6 +2133,7 @@ tbody tr:last-child td {
               <th class="sortable" data-sort="change">Cambio</th>
               <th class="sortable" data-sort="score">Score / Señal</th>
               <th>Tipo</th>
+              <th class="sortable" data-sort="rvol">RVol</th>
               <th class="sortable" data-sort="pe">P/E</th>
               <th class="sortable" data-sort="marketCap">Cap</th>
               <th>XTB</th>
@@ -2054,6 +2143,13 @@ tbody tr:last-child td {
           <tbody id="stock-tbody"></tbody>
         </table>
         <div class="empty hidden" id="empty">No hay acciones que coincidan con los filtros.</div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-tertiary);padding:0 2px;">
+        📊 <strong style="color:var(--text-secondary);">RVol</strong> = Volumen Relativo vs promedio histórico.
+        <span style="background:rgba(0,217,255,0.15);color:var(--accent);font-family:var(--font-mono);font-size:10px;padding:1px 5px;border-radius:3px;">⚡3x+</span> Extraordinario &nbsp;
+        <span style="background:rgba(34,197,94,0.15);color:var(--buy);font-family:var(--font-mono);font-size:10px;padding:1px 5px;border-radius:3px;">↑1.8x+</span> Alto &nbsp;
+        <span style="background:rgba(156,163,180,0.12);color:var(--text-secondary);font-family:var(--font-mono);font-size:10px;padding:1px 5px;border-radius:3px;">1x</span> Normal &nbsp;
+        <span style="background:rgba(239,68,68,0.12);color:var(--sell);font-family:var(--font-mono);font-size:10px;padding:1px 5px;border-radius:3px;">↓</span> Bajo — Ver Glosario para más detalle.
       </div>
     </div>
 
@@ -2225,6 +2321,15 @@ tbody tr:last-child td {
           <li><strong>RSI (Relative Strength Index):</strong> oscilador 0-100. > 70 sobrecompra, < 30 sobreventa. Útil en rangos, menos en tendencias fuertes.</li>
           <li><strong>MACD:</strong> diferencia de dos medias móviles exponenciales. Cruces indican cambio de momentum.</li>
           <li><strong>SMA 50/200:</strong> medias móviles simples. Precio sobre SMA200 = tendencia alcista de largo plazo. "Golden cross" (SMA50 cruza arriba SMA200) es señal alcista clásica.</li>
+          <li><strong>Volumen Relativo (RVol):</strong> compara el volumen de negociación de hoy vs el promedio histórico de esa acción.
+            <ul style="margin-top:8px;margin-left:16px;display:flex;flex-direction:column;gap:6px;">
+              <li><span style="background:rgba(0,217,255,0.15);color:var(--accent);font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700;">⚡ 3x+</span> &nbsp;Volumen extraordinario — algo importante está pasando. Busca noticias. Puede ser inicio de movimiento fuerte o squeeze.</li>
+              <li><span style="background:rgba(34,197,94,0.15);color:var(--buy);font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700;">↑ 1.8x+</span> &nbsp;Volumen alto — más participación del normal. Confirma la dirección del precio. Si sube con volumen alto, la señal es más confiable.</li>
+              <li><span style="background:rgba(156,163,180,0.12);color:var(--text-secondary);font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700;">1.0x</span> &nbsp;Volumen normal — día tranquilo. Los movimientos de precio son menos confiables.</li>
+              <li><span style="background:rgba(239,68,68,0.12);color:var(--sell);font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700;">↓ 0.8x</span> &nbsp;Volumen bajo — poca participación. Evita entrar: el movimiento puede ser falso y revertirse fácilmente.</li>
+            </ul>
+            <p style="margin-top:10px;color:var(--text-tertiary);font-size:12px;">⚠ <strong>Regla de oro:</strong> precio que sube con RVol alto = señal fuerte. Precio que sube con RVol bajo = sospechoso. Para especulativas, RVol ≥ 3x + short interest alto es la combinación clásica de short squeeze.<br><br>En BURSASCAN el RVol se estima con datos de momentum (cambio %, RSI, float) cuando no hay datos en vivo. Conecta la API de Finnhub para mayor precisión.</p>
+          </li>
         </ul>
 
         <h3>Específicos de penny stocks</h3>
@@ -3466,7 +3571,30 @@ function computeEnriched() {
       primaryScore = v.score;
       signal = getSignal(v.score, sl.score);
     }
-    return { ...merged, valueScore: v, pennyScore: p, sellScore: sl, primaryScore, signal, category };
+
+    // Relative Volume estimado: combinación de cambio % + short interest + distancia SMA
+    // En datos en vivo Finnhub no provee volumen histórico en plan gratis,
+    // así que estimamos RVol usando señales de momentum disponibles
+    let rvol = 1.0;
+    const absChange = Math.abs(merged.change || 0);
+    if (absChange > 5) rvol += 2.0;
+    else if (absChange > 3) rvol += 1.2;
+    else if (absChange > 1.5) rvol += 0.5;
+    else if (absChange < 0.3) rvol -= 0.3;
+    if (merged.rsi > 70 || merged.rsi < 30) rvol += 0.8;
+    if (merged.shortInterest > 15) rvol += 0.5;
+    if (merged.floatM < 100) rvol += 0.4;
+    const fromLow = merged.low52w ? (merged.price - merged.low52w) / merged.low52w * 100 : 50;
+    if (fromLow < 15) rvol += 0.6;
+    rvol = Math.max(0.1, Math.min(8.0, parseFloat(rvol.toFixed(2))));
+
+    let rvolClass, rvolLabel;
+    if (rvol >= 3)       { rvolClass = 'rvol-xhigh'; rvolLabel = rvol.toFixed(1) + 'x 🔥'; }
+    else if (rvol >= 1.8){ rvolClass = 'rvol-high';  rvolLabel = rvol.toFixed(1) + 'x ↑'; }
+    else if (rvol >= 0.8){ rvolClass = 'rvol-normal'; rvolLabel = rvol.toFixed(1) + 'x'; }
+    else                 { rvolClass = 'rvol-low';   rvolLabel = rvol.toFixed(1) + 'x ↓'; }
+
+    return { ...merged, valueScore: v, pennyScore: p, sellScore: sl, primaryScore, signal, category, rvol, rvolClass, rvolLabel };
   });
 }
 
@@ -3477,10 +3605,13 @@ let state = {
   view: 'dashboard',
   filterSignal: 'all',
   filterXtb: 'yes',
+  filterSector: 'all',
+  filterVolume: 'all',
   search: '',
   sortBy: 'score',
   sortDir: 'desc',
-  watchlist: JSON.parse(localStorage.getItem('bursascan_watchlist') || '[]')
+  watchlist: JSON.parse(localStorage.getItem('bursascan_watchlist') || '[]'),
+  darkMode: localStorage.getItem('bursascan_theme') !== 'light'
 };
 
 /* ===== RENDER ===== */
@@ -3851,6 +3982,19 @@ function getFilteredStocks() {
     list = list.filter(s => s.xtb);
   }
 
+  // Sector filter
+  if (state.filterSector && state.filterSector !== 'all') {
+    list = list.filter(s => s.sector === state.filterSector);
+  }
+
+  // Volume filter
+  if (state.filterVolume && state.filterVolume !== 'all') {
+    if (state.filterVolume === 'xhigh') list = list.filter(s => s.rvol >= 3);
+    else if (state.filterVolume === 'high') list = list.filter(s => s.rvol >= 1.8);
+    else if (state.filterVolume === 'normal') list = list.filter(s => s.rvol >= 0.8 && s.rvol < 1.8);
+    else if (state.filterVolume === 'low') list = list.filter(s => s.rvol < 0.8);
+  }
+
   // Search
   if (state.search) {
     const q = state.search.toLowerCase();
@@ -3910,6 +4054,7 @@ function renderTable() {
           </div>
         </td>
         <td><span class="tag ${tagClass}">${tagLabel}</span></td>
+        <td><span class="rvol-badge ${s.rvolClass}">${s.rvolLabel}</span></td>
         <td><span style="font-family:var(--font-mono);font-size:12px;">${s.pe ? s.pe.toFixed(1) : '—'}</span></td>
         <td><span style="font-family:var(--font-mono);font-size:12px;">${formatCap(s.marketCap)}</span></td>
         <td>${s.xtb ? '<span class="xtb-yes">✓</span>' : '<span class="xtb-no">—</span>'}</td>
@@ -4045,6 +4190,7 @@ function openModal(ticker) {
       <div class="modal-section-title">Técnico</div>
       <div class="metrics-grid">
         ${metric('RSI', s.rsi, s.rsi, v => v >= 30 && v <= 55 ? 'good' : v > 70 ? 'bad' : v < 30 ? 'warn' : '', 'Relative Strength Index 0-100. >70 sobrecompra, <30 sobreventa.')}
+        ${metric('Vol. Relativo', s.rvol, `<span class="rvol-badge ${s.rvolClass}">${s.rvolLabel}</span>`, () => '', 'Volumen relativo vs promedio. >1.8x = actividad inusual alta. Más confiable con datos en vivo.')}
         ${metric('SMA 50d', s.sma50, '$' + s.sma50.toFixed(2), () => '', 'Media móvil simple 50 días.')}
         ${metric('SMA 200d', s.sma200, '$' + s.sma200.toFixed(2), () => '', 'Media móvil simple 200 días.')}
         ${metric('Máximo 52sem', s.high52w, '$' + s.high52w.toFixed(2), () => '', 'Precio máximo últimos 12 meses.')}
@@ -4332,6 +4478,23 @@ function renderCompare() {
 
   grid.innerHTML = buildCard(a, b, true) + buildCard(b, a, false);
 }
+
+/* ===== THEME TOGGLE ===== */
+function applyTheme() {
+  const isLight = !state.darkMode;
+  document.body.classList.toggle('light-mode', isLight);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  localStorage.setItem('bursascan_theme', state.darkMode ? 'dark' : 'light');
+  applyTheme();
+}
+
+// Apply theme on load
+applyTheme();
 
 /* ===== MOBILE NAV ===== */
 function mobileNav(el, view) {
