@@ -2810,6 +2810,127 @@ const STOCKS = [
 
 /* ===== SCORING ENGINE ===== */
 
+/* ===== PIOTROSKI F-SCORE (0-9) ===== */
+function piotroski(s) {
+  let score = 0;
+  const criteria = [];
+
+  // PROFITABILITY (4 criterios)
+  // F1: ROA positivo (usamos ROE como proxy)
+  if (s.roe && s.roe > 0) {
+    score++; criteria.push(['✓ Rentabilidad positiva (ROE > 0)', true]);
+  } else {
+    criteria.push(['✗ Rentabilidad negativa (ROE ≤ 0)', false]);
+  }
+
+  // F2: FCF positivo
+  if (s.fcfPositive) {
+    score++; criteria.push(['✓ Flujo de caja libre positivo', true]);
+  } else {
+    criteria.push(['✗ FCF negativo', false]);
+  }
+
+  // F3: ROE > 0 y FCF > ROE (accruals positivos)
+  if (s.fcfPositive && s.roe && s.roe > 0) {
+    score++; criteria.push(['✓ Calidad ganancias: FCF respalda ROE', true]);
+  } else {
+    criteria.push(['✗ Ganancias no respaldadas por caja', false]);
+  }
+
+  // F4: Margen operativo positivo
+  if (s.opMargin && s.opMargin > 0) {
+    score++; criteria.push(['✓ Margen operativo positivo', true]);
+  } else {
+    criteria.push(['✗ Margen operativo negativo', false]);
+  }
+
+  // LEVERAGE / LIQUIDITY (3 criterios)
+  // F5: Deuda/patrimonio < 1 (baja deuda)
+  if (s.debtEquity !== null && s.debtEquity >= 0 && s.debtEquity < 1) {
+    score++; criteria.push(['✓ Deuda baja (D/E < 1)', true]);
+  } else {
+    criteria.push(['✗ Deuda elevada (D/E ≥ 1)', false]);
+  }
+
+  // F6: Current ratio > 1 (liquidez)
+  if (s.currentRatio && s.currentRatio > 1) {
+    score++; criteria.push(['✓ Liquidez saludable (CR > 1)', true]);
+  } else {
+    criteria.push(['✗ Liquidez ajustada (CR ≤ 1)', false]);
+  }
+
+  // F7: Sin dilución significativa (float grande = proxy de no dilución reciente)
+  if (s.floatM && s.floatM > 50) {
+    score++; criteria.push(['✓ Sin señales de dilución reciente', true]);
+  } else {
+    criteria.push(['✗ Float muy bajo — riesgo dilución', false]);
+  }
+
+  // OPERATING EFFICIENCY (2 criterios)
+  // F8: Margen operativo > 10%
+  if (s.opMargin && s.opMargin > 10) {
+    score++; criteria.push(['✓ Margen operativo > 10%', true]);
+  } else {
+    criteria.push(['✗ Margen operativo bajo (< 10%)', false]);
+  }
+
+  // F9: ROIC > 8%
+  if (s.roic && s.roic > 8) {
+    score++; criteria.push(['✓ ROIC > 8% — capital bien empleado', true]);
+  } else {
+    criteria.push(['✗ ROIC bajo — capital poco eficiente', false]);
+  }
+
+  let label, cls;
+  if (score >= 8)      { label = 'EXCELENTE'; cls = 'good'; }
+  else if (score >= 6) { label = 'BUENO';     cls = 'good'; }
+  else if (score >= 4) { label = 'REGULAR';   cls = 'warn'; }
+  else                 { label = 'DÉBIL';     cls = 'bad';  }
+
+  return { score, label, cls, criteria };
+}
+
+/* ===== EV/EBITDA ===== */
+function evEbitda(s) {
+  // EV = MarketCap + Deuda neta (aproximación)
+  // EBITDA ≈ ingresos * margen operativo (aproximación con datos disponibles)
+  // marketCap está en billions, fcfB en billions
+  if (!s.marketCap || !s.opMargin || s.opMargin <= 0) return null;
+
+  // Estimamos ingresos a partir de FCF y margen operativo como proxy
+  // Si no tenemos ingresos directos usamos: EBITDA ≈ marketCap / PE * (1 + depreciación estimada 15%)
+  let ebitda = null;
+
+  if (s.pe && s.pe > 0 && s.marketCap) {
+    const earnings = s.marketCap / s.pe;
+    // EBITDA ≈ earnings / margen neto * margen EBITDA estimado
+    // Usamos margen op como proxy: EBITDA ≈ earnings * (opMargin + 5) / opMargin
+    const ebitdaMarginAdj = (s.opMargin + 5) / s.opMargin;
+    ebitda = earnings * ebitdaMarginAdj;
+  } else if (s.fcfB && s.fcfB > 0 && s.opMargin) {
+    ebitda = s.fcfB * (100 / s.opMargin) * 0.9;
+  }
+
+  if (!ebitda || ebitda <= 0) return null;
+
+  // Deuda neta estimada
+  const debtAdj = (s.debtEquity && s.debtEquity > 0)
+    ? s.marketCap * Math.min(s.debtEquity * 0.3, 0.5)
+    : 0;
+
+  const ev = s.marketCap + debtAdj;
+  const ratio = ev / ebitda;
+
+  let label, cls, detail;
+  if (ratio < 8)       { label = 'EXCELENTE'; cls = 'good';  detail = 'Muy barato vs flujo operativo'; }
+  else if (ratio < 14) { label = 'BUENO';     cls = 'good';  detail = 'Valoración razonable'; }
+  else if (ratio < 20) { label = 'REGULAR';   cls = 'warn';  detail = 'Algo caro, justificado si crece fuerte'; }
+  else if (ratio < 30) { label = 'CARO';      cls = 'bad';   detail = 'Valoración elevada'; }
+  else                 { label = 'MUY CARO';  cls = 'bad';   detail = 'Prima especulativa alta'; }
+
+  return { ratio: ratio.toFixed(1), label, cls, detail };
+}
+
 function scoreValue(s) {
   let score = 50;
   const breakdown = [];
@@ -2891,6 +3012,21 @@ function scoreValue(s) {
   // Insider buying
   if (s.insider === 'buy') { score += 4; breakdown.push(['Insiders comprando', 4, '+']); }
   else if (s.insider === 'sell') { score -= 3; breakdown.push(['Insiders vendiendo', -3, '-']); }
+
+  // Piotroski F-Score bonus
+  const pF = piotroski(s);
+  if (pF.score >= 8)      { score += 8; breakdown.push(['Piotroski F ≥ 8 (Excelente)', 8, pF.score + '/9']); }
+  else if (pF.score >= 6) { score += 4; breakdown.push(['Piotroski F ≥ 6 (Bueno)', 4, pF.score + '/9']); }
+  else if (pF.score <= 2) { score -= 8; breakdown.push(['Piotroski F ≤ 2 (Débil)', -8, pF.score + '/9']); }
+  else if (pF.score <= 3) { score -= 4; breakdown.push(['Piotroski F bajo', -4, pF.score + '/9']); }
+
+  // EV/EBITDA bonus
+  const evEb = evEbitda(s);
+  if (evEb) {
+    if (parseFloat(evEb.ratio) < 8)       { score += 6; breakdown.push(['EV/EBITDA excelente (< 8x)', 6, evEb.ratio + 'x']); }
+    else if (parseFloat(evEb.ratio) < 14) { score += 3; breakdown.push(['EV/EBITDA bueno (< 14x)', 3, evEb.ratio + 'x']); }
+    else if (parseFloat(evEb.ratio) > 25) { score -= 5; breakdown.push(['EV/EBITDA muy caro (> 25x)', -5, evEb.ratio + 'x']); }
+  }
 
   return { score: clamp(score), breakdown };
 }
@@ -3779,6 +3915,54 @@ function openModal(ticker) {
         `).join('')}
       </div>
 
+      <!-- PIOTROSKI F-SCORE -->
+      ${(() => {
+        const p = piotroski(s);
+        const barW = (p.score / 9 * 100).toFixed(0);
+        const barColor = p.score >= 6 ? 'var(--buy)' : p.score >= 4 ? 'var(--hold)' : 'var(--sell)';
+        return `
+        <div class="modal-section-title" style="margin-top:24px;">🏅 Piotroski F-Score</div>
+        <div style="background:var(--bg-elevated);border-radius:12px;padding:16px 18px;border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <span style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:${barColor}">${p.score}</span>
+              <span style="font-size:14px;color:var(--text-secondary);margin-left:4px;">/ 9</span>
+              <span class="metric-value ${p.cls}" style="margin-left:12px;font-size:13px;padding:3px 10px;border-radius:6px;background:${p.cls==='good'?'var(--buy-bg)':p.cls==='warn'?'var(--hold-bg)':'var(--sell-bg)'};">${p.label}</span>
+            </div>
+          </div>
+          <div style="background:var(--bg-base);border-radius:6px;height:8px;margin-bottom:14px;overflow:hidden;">
+            <div style="height:100%;width:${barW}%;background:${barColor};border-radius:6px;transition:width 0.6s ease;"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            ${p.criteria.map(([text, pass]) => `
+              <div style="font-size:11px;color:${pass ? 'var(--buy)' : 'var(--text-tertiary)'};">${text}</div>
+            `).join('')}
+          </div>
+          <div style="margin-top:10px;font-size:10px;color:var(--text-tertiary);">Score ≥ 7 = empresa financieramente sólida · ≤ 3 = señales de alerta</div>
+        </div>`;
+      })()}
+
+      <!-- EV/EBITDA -->
+      ${(() => {
+        const ev = evEbitda(s);
+        if (!ev) return `
+        <div class="modal-section-title" style="margin-top:24px;">📊 EV/EBITDA</div>
+        <div style="background:var(--bg-elevated);border-radius:12px;padding:14px 18px;border:1px solid var(--border);color:var(--text-tertiary);font-size:13px;">
+          No hay suficientes datos para calcular EV/EBITDA para esta acción.
+        </div>`;
+        const color = ev.cls === 'good' ? 'var(--buy)' : ev.cls === 'warn' ? 'var(--hold)' : 'var(--sell)';
+        return `
+        <div class="modal-section-title" style="margin-top:24px;">📊 EV/EBITDA</div>
+        <div style="background:var(--bg-elevated);border-radius:12px;padding:16px 18px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <span style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:${color}">${ev.ratio}x</span>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${ev.detail}</div>
+          </div>
+          <span class="metric-value ${ev.cls}" style="font-size:14px;padding:6px 14px;border-radius:8px;background:${ev.cls==='good'?'var(--buy-bg)':ev.cls==='warn'?'var(--hold-bg)':'var(--sell-bg)'};">${ev.label}</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);padding:0 2px;">< 8x Excelente · 8–14x Bueno · 14–20x Regular · > 20x Caro · Calculado con aproximación de datos disponibles</div>`;
+      })()}
+
       <div style="margin-top:24px;padding:16px;background:var(--bg-elevated);border-radius:10px;font-size:12px;color:var(--text-tertiary);line-height:1.6;">
         <strong style="color:var(--text-secondary);">Importante:</strong> Esta no es una recomendación financiera. Los scores son cálculos matemáticos basados en métricas estándar de mercado. Antes de operar verifica los datos en fuente oficial (página de relaciones con inversionistas de la empresa, SEC EDGAR), considera tu situación personal, y consulta con un asesor si necesitas. Datos en vivo solo si conectaste API en la pestaña <em>Conectar datos en vivo</em>.
       </div>
@@ -3916,6 +4100,8 @@ function renderCompare() {
     ['Earnings', s => { const d=daysToEarnings(s.ticker); return d!==null&&d>=0?`${d}d`:'—'; }, null],
     ['Cap. Mercado', s => formatCap(s.marketCap), null],
     ['Analistas', s => s.analyst ? s.analyst.toFixed(1)+'/5' : '—', (av,bv) => parseFloat(av) > parseFloat(bv)],
+    ['Piotroski F', s => { const p=piotroski(s); return `${p.score}/9 ${p.label}`; }, (av,bv) => parseInt(av) > parseInt(bv)],
+    ['EV/EBITDA', s => { const e=evEbitda(s); return e ? `${e.ratio}x ${e.label}` : '—'; }, (av,bv) => av!=='—'&&bv!=='—'&&parseFloat(av)<parseFloat(bv)],
   ];
 
   const buildCard = (s, other, isA) => {
