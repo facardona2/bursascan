@@ -3031,6 +3031,137 @@ function scoreValue(s) {
   return { score: clamp(score), breakdown };
 }
 
+/* ===== SQUEEZE SCORE (0-100) ===== */
+function squeezeScore(s) {
+  let score = 0;
+  const factors = [];
+
+  // Short interest — motor del squeeze
+  if (s.shortInterest > 30)      { score += 30; factors.push(['🔥 Short interest > 30%', 30, s.shortInterest.toFixed(1)+'%']); }
+  else if (s.shortInterest > 20) { score += 22; factors.push(['Short interest > 20%', 22, s.shortInterest.toFixed(1)+'%']); }
+  else if (s.shortInterest > 12) { score += 12; factors.push(['Short interest > 12%', 12, s.shortInterest.toFixed(1)+'%']); }
+  else if (s.shortInterest > 5)  { score += 4;  factors.push(['Short interest moderado', 4, s.shortInterest.toFixed(1)+'%']); }
+
+  // Float bajo — menos acciones = más presión por acción
+  if (s.floatM < 20)       { score += 30; factors.push(['🔥 Float ultra bajo (< 20M)', 30, s.floatM+'M']); }
+  else if (s.floatM < 50)  { score += 22; factors.push(['Float muy bajo (< 50M)', 22, s.floatM+'M']); }
+  else if (s.floatM < 100) { score += 14; factors.push(['Float bajo (< 100M)', 14, s.floatM+'M']); }
+  else if (s.floatM < 250) { score += 6;  factors.push(['Float moderado', 6, s.floatM+'M']); }
+
+  // RSI en zona de rebote pero no sobrecomprado
+  if (s.rsi < 35)                    { score += 15; factors.push(['RSI sobreventa — energía acumulada', 15, 'RSI '+s.rsi]); }
+  else if (s.rsi >= 35 && s.rsi < 50){ score += 8;  factors.push(['RSI neutro — sin sobrecompra', 8, 'RSI '+s.rsi]); }
+  else if (s.rsi > 70)               { score -= 10; factors.push(['RSI sobrecomprado — squeeze tardío', -10, 'RSI '+s.rsi]); }
+
+  // Insiders comprando = confianza interna
+  if (s.insider === 'buy') { score += 15; factors.push(['Insiders comprando', 15, '✓']); }
+
+  // Precio cerca del mínimo = más shorts atrapados
+  const fromLow = (s.price - s.low52w) / s.low52w * 100;
+  if (fromLow < 20)       { score += 10; factors.push(['Precio cerca del mínimo 52w', 10, '+'+fromLow.toFixed(0)+'%']); }
+  else if (fromLow < 50)  { score += 4;  factors.push(['Algo sobre mínimo 52w', 4, '+'+fromLow.toFixed(0)+'%']); }
+
+  score = Math.min(100, Math.max(0, score));
+
+  let label, cls, advice;
+  if (score >= 70)      { label = 'POTENCIAL ALTO';   cls = 'good'; advice = 'Setup de squeeze favorable. Stop loss ajustado obligatorio.'; }
+  else if (score >= 45) { label = 'POTENCIAL MEDIO';  cls = 'warn'; advice = 'Condiciones parciales. Monitorear volumen inusual.'; }
+  else                  { label = 'POTENCIAL BAJO';   cls = 'bad';  advice = 'No hay condiciones claras de squeeze ahora.'; }
+
+  return { score, label, cls, advice, factors };
+}
+
+/* ===== SURVIVAL SCORE — riesgo quiebra/dilución (0-100, más alto = más seguro) ===== */
+function survivalScore(s) {
+  let score = 50;
+  const factors = [];
+
+  // Current ratio — liquidez inmediata
+  if (s.currentRatio >= 3)       { score += 20; factors.push(['✓ Liquidez excelente (CR ≥ 3)', 20, s.currentRatio.toFixed(2)]); }
+  else if (s.currentRatio >= 1.5){ score += 12; factors.push(['✓ Liquidez buena (CR ≥ 1.5)', 12, s.currentRatio.toFixed(2)]); }
+  else if (s.currentRatio >= 1)  { score += 4;  factors.push(['⚠ Liquidez ajustada (CR ≥ 1)', 4, s.currentRatio.toFixed(2)]); }
+  else if (s.currentRatio > 0)   { score -= 15; factors.push(['✗ Liquidez peligrosa (CR < 1)', -15, s.currentRatio.toFixed(2)]); }
+
+  // Deuda
+  if (s.debtEquity === null || s.debtEquity < 0) {
+    score -= 5; factors.push(['⚠ Patrimonio negativo', -5, '—']);
+  } else if (s.debtEquity < 0.3) { score += 15; factors.push(['✓ Deuda muy baja', 15, s.debtEquity.toFixed(2)]); }
+  else if (s.debtEquity < 1)     { score += 8;  factors.push(['✓ Deuda manejable', 8, s.debtEquity.toFixed(2)]); }
+  else if (s.debtEquity < 2)     { score -= 5;  factors.push(['⚠ Deuda elevada', -5, s.debtEquity.toFixed(2)]); }
+  else                           { score -= 15; factors.push(['✗ Deuda peligrosa', -15, s.debtEquity.toFixed(2)]); }
+
+  // FCF
+  if (s.fcfPositive && s.fcfB > 0) {
+    score += 15; factors.push(['✓ FCF positivo — se autofinancia', 15, '$'+s.fcfB.toFixed(2)+'B']);
+  } else if (s.fcfB && s.fcfB < -0.5) {
+    score -= 15; factors.push(['✗ Quemando caja rápido', -15, '$'+s.fcfB.toFixed(2)+'B']);
+  } else {
+    score -= 5; factors.push(['⚠ FCF negativo', -5, s.fcfB ? '$'+s.fcfB.toFixed(2)+'B' : '—']);
+  }
+
+  // Float como proxy de dilución
+  if (s.floatM < 30)        { score -= 10; factors.push(['⚠ Float muy bajo — riesgo dilución', -10, s.floatM+'M']); }
+  else if (s.floatM >= 100) { score += 8;  factors.push(['✓ Float amplio — menor riesgo dilución', 8, s.floatM+'M']); }
+
+  // Insider
+  if (s.insider === 'buy')  { score += 10; factors.push(['✓ Insiders comprando', 10, '✓']); }
+  else if (s.insider === 'sell') { score -= 8; factors.push(['✗ Insiders vendiendo', -8, '✗']); }
+
+  score = Math.min(100, Math.max(0, score));
+
+  let label, cls, advice;
+  if (score >= 70)      { label = 'SEGURA';        cls = 'good'; advice = 'Empresa con recursos para sobrevivir y ejecutar.'; }
+  else if (score >= 50) { label = 'ACEPTABLE';     cls = 'warn'; advice = 'Riesgo moderado. Vigilar liquidez y noticias.'; }
+  else if (score >= 30) { label = 'RIESGOSA';      cls = 'bad';  advice = 'Alta probabilidad de dilución o problemas de caja.'; }
+  else                  { label = 'PELIGRO';        cls = 'bad';  advice = '⚠ Riesgo de quiebra o dilución severa. Posición muy pequeña o evitar.'; }
+
+  return { score, label, cls, advice, factors };
+}
+
+/* ===== SEMÁFORO DE ENTRADA para especulativas ===== */
+function entrySignal(s) {
+  const squeeze = squeezeScore(s);
+  const survival = survivalScore(s);
+  const fromLow = (s.price - s.low52w) / s.low52w * 100;
+  const fromHigh = (s.high52w - s.price) / s.high52w * 100;
+
+  let points = 0;
+
+  // Técnico
+  if (s.rsi < 35) points += 3;
+  else if (s.rsi < 45) points += 2;
+  else if (s.rsi > 70) points -= 2;
+
+  if (s.price > s.sma50) points += 2;
+  if (fromLow < 30) points += 2;
+  if (fromHigh > 40) points += 1; // lejos del máximo = más upside
+
+  // Squeeze
+  if (squeeze.score >= 70) points += 3;
+  else if (squeeze.score >= 45) points += 1;
+
+  // Supervivencia
+  if (survival.score >= 70) points += 3;
+  else if (survival.score >= 50) points += 1;
+  else if (survival.score < 30) points -= 3;
+
+  // Catalizador
+  if (s.catalyst) points += 1;
+  if (s.insider === 'buy') points += 2;
+
+  // Earnings próximos
+  const days = daysToEarnings(s.ticker);
+  if (days !== null && days >= 0 && days <= 14) points += 1;
+
+  let emoji, label, color, advice;
+  if (points >= 10)     { emoji = '🟢'; label = 'ZONA DE COMPRA';  color = 'var(--buy)';  advice = 'Múltiples factores alineados. Entrada con stop loss claro bajo el mínimo reciente.'; }
+  else if (points >= 6) { emoji = '🟡'; label = 'ESPERAR SEÑAL';   color = 'var(--hold)'; advice = 'Condiciones parciales. Esperar confirmación técnica o catalizador.'; }
+  else if (points >= 3) { emoji = '🟠'; label = 'PRECAUCIÓN';      color = '#f97316';     advice = 'Setup débil. Solo para traders con alta tolerancia al riesgo.'; }
+  else                  { emoji = '🔴'; label = 'EVITAR AHORA';    color = 'var(--sell)'; advice = 'Demasiados factores en contra. Esperar mejor momento.'; }
+
+  return { emoji, label, color, advice, points };
+}
+
 function scorePenny(s) {
   let score = 40; // baseline lower for speculative
   const breakdown = [];
@@ -3110,6 +3241,14 @@ function scorePenny(s) {
     score += 5;
     breakdown.push(['Cerca del mínimo 52w', 5, '+' + fromLow.toFixed(0) + '%']);
   }
+
+  // Integrate squeeze and survival into score
+  const sq = squeezeScore(s);
+  const sv = survivalScore(s);
+  if (sq.score >= 70) { score += 8; breakdown.push(['Squeeze score alto', 8, sq.score+'/100']); }
+  else if (sq.score >= 45) { score += 3; breakdown.push(['Squeeze score medio', 3, sq.score+'/100']); }
+  if (sv.score >= 70) { score += 8; breakdown.push(['Supervivencia alta', 8, sv.score+'/100']); }
+  else if (sv.score < 30) { score -= 10; breakdown.push(['Riesgo supervivencia alto', -10, sv.score+'/100']); }
 
   return { score: clamp(score), breakdown };
 }
@@ -3741,7 +3880,7 @@ function renderTable() {
       <tr onclick="openModal('${s.ticker}')">
         <td>
           <div class="cell-ticker">
-            <span class="ticker">${s.ticker}${earningsBadgeHtml(s.ticker)}</span>
+            <span class="ticker">${s.ticker}${earningsBadgeHtml(s.ticker)}${s.category === 'penny' ? (() => { const e = entrySignal(s); return `<span title="${e.label}" style="margin-left:4px;font-size:12px;">${e.emoji}</span>`; })() : ''}</span>
             <span class="company-name">${s.name}</span>
           </div>
         </td>
@@ -3962,6 +4101,62 @@ function openModal(ticker) {
         </div>
         <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);padding:0 2px;">< 8x Excelente · 8–14x Bueno · 14–20x Regular · > 20x Caro · Calculado con aproximación de datos disponibles</div>`;
       })()}
+
+      <!-- PANELES ESPECIALES SOLO PARA PENNY/ESPECULATIVAS -->
+      ${s.category === 'penny' ? (() => {
+        const entry = entrySignal(s);
+        const sq = squeezeScore(s);
+        const sv = survivalScore(s);
+
+        const miniBar = (val, color) => `
+          <div style="background:var(--bg-base);border-radius:4px;height:6px;overflow:hidden;margin-top:4px;">
+            <div style="height:100%;width:${val}%;background:${color};border-radius:4px;"></div>
+          </div>`;
+
+        return `
+        <!-- SEMÁFORO DE ENTRADA -->
+        <div class="modal-section-title" style="margin-top:24px;">🚦 Semáforo de entrada</div>
+        <div style="background:var(--bg-elevated);border-radius:14px;padding:20px;border:2px solid ${entry.color};text-align:center;">
+          <div style="font-size:48px;line-height:1;margin-bottom:8px;">${entry.emoji}</div>
+          <div style="font-size:20px;font-weight:800;color:${entry.color};font-family:var(--font-display);letter-spacing:-0.02em;">${entry.label}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;line-height:1.5;">${entry.advice}</div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;font-family:var(--font-mono);">Score de entrada: ${entry.points} / 16 factores</div>
+        </div>
+
+        <!-- SQUEEZE SCORE -->
+        <div class="modal-section-title" style="margin-top:20px;">💥 Potencial de Short Squeeze</div>
+        <div style="background:var(--bg-elevated);border-radius:12px;padding:16px 18px;border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <span style="font-family:var(--font-mono);font-size:26px;font-weight:700;color:${sq.cls==='good'?'var(--buy)':sq.cls==='warn'?'var(--hold)':'var(--sell)'}">${sq.score}</span>
+              <span style="font-size:13px;color:var(--text-secondary);margin-left:4px;">/ 100</span>
+            </div>
+            <span style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:8px;background:${sq.cls==='good'?'var(--buy-bg)':sq.cls==='warn'?'var(--hold-bg)':'var(--sell-bg)'};color:${sq.cls==='good'?'var(--buy)':sq.cls==='warn'?'var(--hold)':'var(--sell)'};">${sq.label}</span>
+          </div>
+          ${miniBar(sq.score, sq.cls==='good'?'var(--buy)':sq.cls==='warn'?'var(--hold)':'var(--sell)')}
+          <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">${sq.advice}</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">
+            ${sq.factors.map(([f,v,d])=>`<div style="font-size:11px;color:${v>0?'var(--buy)':v<0?'var(--sell)':'var(--text-tertiary)'};">${f} <span style="color:var(--text-tertiary);">· ${d}</span></div>`).join('')}
+          </div>
+        </div>
+
+        <!-- SURVIVAL SCORE -->
+        <div class="modal-section-title" style="margin-top:20px;">🛡️ Score de Supervivencia</div>
+        <div style="background:var(--bg-elevated);border-radius:12px;padding:16px 18px;border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <span style="font-family:var(--font-mono);font-size:26px;font-weight:700;color:${sv.cls==='good'?'var(--buy)':sv.cls==='warn'?'var(--hold)':'var(--sell)'}">${sv.score}</span>
+              <span style="font-size:13px;color:var(--text-secondary);margin-left:4px;">/ 100</span>
+            </div>
+            <span style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:8px;background:${sv.cls==='good'?'var(--buy-bg)':sv.cls==='warn'?'var(--hold-bg)':'var(--sell-bg)'};color:${sv.cls==='good'?'var(--buy)':sv.cls==='warn'?'var(--hold)':'var(--sell)'};">${sv.label}</span>
+          </div>
+          ${miniBar(sv.score, sv.cls==='good'?'var(--buy)':sv.cls==='warn'?'var(--hold)':'var(--sell)')}
+          <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">${sv.advice}</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">
+            ${sv.factors.map(([f,v,d])=>`<div style="font-size:11px;color:${v>0?'var(--buy)':v<0?'var(--sell)':'var(--text-tertiary)'};">${f} <span style="color:var(--text-tertiary);">· ${d}</span></div>`).join('')}
+          </div>
+        </div>`;
+      })() : ''}
 
       <div style="margin-top:24px;padding:16px;background:var(--bg-elevated);border-radius:10px;font-size:12px;color:var(--text-tertiary);line-height:1.6;">
         <strong style="color:var(--text-secondary);">Importante:</strong> Esta no es una recomendación financiera. Los scores son cálculos matemáticos basados en métricas estándar de mercado. Antes de operar verifica los datos en fuente oficial (página de relaciones con inversionistas de la empresa, SEC EDGAR), considera tu situación personal, y consulta con un asesor si necesitas. Datos en vivo solo si conectaste API en la pestaña <em>Conectar datos en vivo</em>.
