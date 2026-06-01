@@ -1527,7 +1527,218 @@ tbody tr:last-child td {
   line-height: 1.4;
   pointer-events: none;
 }
+
+/* ===== EARNINGS BADGE ===== */
+.earnings-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: rgba(245,158,11,0.15);
+  color: var(--hold);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 6px;
+}
+.earnings-soon {
+  background: rgba(239,68,68,0.15);
+  color: var(--sell);
+  border-color: rgba(239,68,68,0.3);
+}
+
+/* ===== NEWS SECTION ===== */
+.news-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.news-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.news-item:hover { border-color: var(--accent); }
+.news-item-headline { font-size: 13px; color: var(--text-primary); line-height: 1.4; margin-bottom: 4px; }
+.news-item-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.news-loading { color: var(--text-tertiary); font-size: 13px; padding: 12px 0; }
+
+/* ===== WATCHLIST NOTES ===== */
+.wl-note-wrap { margin-top: 8px; }
+.wl-note-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color var(--transition);
+}
+.wl-note-input:focus { outline: none; border-color: var(--accent); }
+.wl-entry-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.wl-entry-input:focus { outline: none; border-color: var(--buy); }
+.wl-save-btn {
+  margin-top: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(0,217,255,0.3);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+.wl-save-btn:hover { background: rgba(0,217,255,0.25); }
+.wl-entry-display {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--buy);
+  margin-top: 4px;
+}
+.wl-pnl-pos { color: var(--buy); }
+.wl-pnl-neg { color: var(--sell); }
+
+/* ===== SIGNAL ALERT BADGE ===== */
+.signal-changed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: rgba(239,68,68,0.15);
+  color: var(--sell);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  animation: alertPulse 1.5s ease infinite;
+}
+@keyframes alertPulse {
+  0%,100% { opacity:1; } 50% { opacity:0.5; }
+}
+
+/* ===== COMPARE VIEW ===== */
+#view-compare { padding: 0; }
+.compare-selector {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.compare-select {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+.compare-select:focus { outline: none; border-color: var(--accent); }
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.compare-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.compare-card-ticker {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.compare-card-name { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+.compare-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.compare-metric-row:last-child { border-bottom: none; }
+.compare-metric-label { color: var(--text-secondary); }
+.compare-metric-val { font-family: var(--font-mono); font-weight: 600; }
+.compare-winner { color: var(--buy); }
+.compare-loser { color: var(--sell); }
+.compare-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: 40px;
+  font-size: 14px;
+}
+
+/* ===== PWA INSTALL BANNER ===== */
+#pwa-banner {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(0,217,255,0.3);
+  border-radius: 14px;
+  padding: 16px 20px;
+  z-index: 500;
+  display: none;
+  max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity:0; }
+  to   { transform: translateY(0); opacity:1; }
+}
+.pwa-banner-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.pwa-banner-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+.pwa-banner-btns { display: flex; gap: 8px; }
+.pwa-install-btn {
+  flex: 1;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pwa-dismiss-btn {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
 </style>
+<!-- PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BURSASCAN">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" id="pwa-manifest">
 </head>
 <body>
 
@@ -1567,6 +1778,9 @@ tbody tr:last-child td {
     </div>
     <div class="nav-item" data-view="watchlist">
       <span>⭐</span> Mi watchlist <span class="count" id="count-watch">0</span>
+    </div>
+    <div class="nav-item" data-view="compare">
+      <span>⚖️</span> Comparar acciones
     </div>
 
     <div class="nav-section-label">Info</div>
@@ -1800,6 +2014,21 @@ tbody tr:last-child td {
         <h3>Limpiar caché</h3>
         <p>Si los datos en vivo se quedan viejos o quieres reset:</p>
         <button class="btn btn-ghost" onclick="clearLiveCache()">🗑️ Limpiar caché de datos en vivo</button>
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div id="view-compare" class="hidden">
+      <div class="compare-selector">
+        <select class="compare-select" id="compare-a" onchange="renderCompare()">
+          <option value="">— Selecciona acción A —</option>
+        </select>
+        <select class="compare-select" id="compare-b" onchange="renderCompare()">
+          <option value="">— Selecciona acción B —</option>
+        </select>
+      </div>
+      <div class="compare-grid" id="compare-grid">
+        <div class="compare-empty">Selecciona dos acciones para comparar sus métricas lado a lado</div>
       </div>
     </div>
 
@@ -2682,6 +2911,90 @@ let liveData = JSON.parse(localStorage.getItem('bursascan_live') || '{}');
 let liveDataTimestamp = parseInt(localStorage.getItem('bursascan_live_ts') || '0');
 let apiKey = localStorage.getItem('bursascan_api_key') || '';
 
+/* ===== EARNINGS CALENDAR (próximas fechas estimadas 2026) ===== */
+const EARNINGS = {
+  'AAPL': '2026-07-31', 'MSFT': '2026-07-30', 'GOOGL': '2026-07-29',
+  'AMZN': '2026-08-01', 'META': '2026-07-30', 'TSLA': '2026-07-23',
+  'NVDA': '2026-08-27', 'AMD': '2026-07-29', 'NFLX': '2026-07-16',
+  'ADBE': '2026-09-17', 'MRVL': '2026-09-04', 'CSCO': '2026-08-13',
+  'QCOM': '2026-07-30', 'INTC': '2026-07-24', 'JPM': '2026-07-14',
+  'GS': '2026-07-15', 'MS': '2026-07-16', 'AXP': '2026-07-18',
+  'BLK': '2026-07-13', 'BAC': '2026-07-14', 'C': '2026-07-15',
+  'WFC': '2026-07-14', 'V': '2026-07-22', 'MA': '2026-07-29',
+  'JNJ': '2026-07-15', 'UNH': '2026-07-15', 'ABBV': '2026-07-25',
+  'MRK': '2026-07-29', 'ABT': '2026-07-16', 'AMGN': '2026-08-05',
+  'PFE': '2026-07-29', 'PG': '2026-07-29', 'KO': '2026-07-23',
+  'PEP': '2026-07-10', 'MCD': '2026-07-28', 'SBUX': '2026-07-29',
+  'WMT': '2026-08-18', 'HD': '2026-08-19', 'DIS': '2026-08-06',
+  'NKE': '2026-09-25', 'CPB': '2026-09-10', 'CELH': '2026-08-06',
+  'XOM': '2026-08-01', 'CVX': '2026-08-02', 'COP': '2026-08-07',
+  'SLB': '2026-07-18', 'BA': '2026-07-29', 'GE': '2026-07-22',
+  'RTX': '2026-07-22', 'HON': '2026-07-24', 'DE': '2026-08-20',
+  'MMM': '2026-07-22', 'IBM': '2026-07-20', 'ORCL': '2026-09-11',
+  'CRM': '2026-08-27', 'NOW': '2026-07-23', 'SNOW': '2026-08-27',
+  'PLTR': '2026-08-04', 'RIVN': '2026-08-06', 'LCID': '2026-08-05',
+  'SOFI': '2026-07-29', 'HOOD': '2026-07-30', 'COIN': '2026-08-06',
+  'RDDT': '2026-08-05', 'USAR': '2026-08-12', 'RHI': '2026-07-22',
+  'JOBY': '2026-08-07', 'ACHR': '2026-08-13', 'QFIN': '2026-08-20',
+  'RACE': '2026-08-01', 'AG': '2026-08-06', 'TSM': '2026-07-17',
+  'BABA': '2026-08-15', 'JD': '2026-08-20', 'NIO': '2026-09-05',
+  'XPEV': '2026-08-27', 'MSTR': '2026-07-29', 'WOLF': '2026-08-19',
+  'WBA': '2026-07-09', 'CVS': '2026-08-06', 'KHC': '2026-07-30',
+  'MO': '2026-07-29', 'VZ': '2026-07-21', 'T': '2026-07-23',
+  'F': '2026-07-28', 'GM': '2026-07-22', 'PSFE': '2026-08-12',
+  'CIFR': '2026-08-10', 'CRML': '2026-09-15', 'TNYA': '2026-09-18',
+};
+
+function daysToEarnings(ticker) {
+  const d = EARNINGS[ticker];
+  if (!d) return null;
+  const diff = Math.round((new Date(d) - new Date()) / 86400000);
+  return diff;
+}
+
+function earningsBadgeHtml(ticker) {
+  const days = daysToEarnings(ticker);
+  if (days === null) return '';
+  if (days < 0) return '';
+  const cls = days <= 7 ? 'earnings-soon' : '';
+  const label = days === 0 ? '📅 HOY' : days === 1 ? '📅 Mañana' : `📅 ${days}d`;
+  return `<span class="earnings-badge ${cls}">${label}</span>`;
+}
+
+/* ===== WATCHLIST NOTES & ENTRY PRICE ===== */
+let wlNotes = JSON.parse(localStorage.getItem('bursascan_wl_notes') || '{}');
+let wlEntry = JSON.parse(localStorage.getItem('bursascan_wl_entry') || '{}');
+
+function saveWlNote(ticker, note) {
+  wlNotes[ticker] = note;
+  localStorage.setItem('bursascan_wl_notes', JSON.stringify(wlNotes));
+}
+
+function saveWlEntry(ticker, price) {
+  const p = parseFloat(price);
+  if (!isNaN(p) && p > 0) {
+    wlEntry[ticker] = p;
+    localStorage.setItem('bursascan_wl_entry', JSON.stringify(wlEntry));
+  }
+}
+
+/* ===== SIGNAL HISTORY (alerta cambio señal) ===== */
+let signalHistory = JSON.parse(localStorage.getItem('bursascan_signals') || '{}');
+
+function checkSignalChanges(enrichedList) {
+  const changes = [];
+  enrichedList.forEach(s => {
+    const prev = signalHistory[s.ticker];
+    const curr = s.signal.tier;
+    if (prev && prev !== curr) {
+      changes.push({ ticker: s.ticker, from: prev, to: curr });
+    }
+    signalHistory[s.ticker] = curr;
+  });
+  localStorage.setItem('bursascan_signals', JSON.stringify(signalHistory));
+  return changes;
+}
+
 function computeEnriched() {
   return STOCKS.map(s => {
     // Merge live data over snapshot data
@@ -2727,6 +3040,7 @@ function render() {
   document.getElementById('view-methodology').classList.add('hidden');
   document.getElementById('view-api').classList.add('hidden');
   document.getElementById('view-glossary').classList.add('hidden');
+  document.getElementById('view-compare').classList.add('hidden');
 
   // Active nav
   document.querySelectorAll('.nav-item').forEach(el => {
@@ -2739,19 +3053,32 @@ function render() {
     penny: ['Especulativas / Recovery', 'Acciones de alto riesgo con potencial de repunte fuerte'],
     sell: ['Sobrevaloradas', 'Señales de venta — acciones caras o sobrecompradas'],
     watchlist: ['Mi watchlist', 'Acciones que has marcado para seguir'],
+    compare: ['Comparar acciones', 'Analiza dos acciones lado a lado'],
     methodology: ['Metodología', 'Cómo se calculan los scores y señales'],
     api: ['Conectar datos en vivo', 'Convertir la app en escáner real con APIs'],
     glossary: ['Glosario', 'Todos los términos explicados']
   };
-  document.getElementById('page-title').textContent = titles[state.view][0];
-  document.getElementById('page-subtitle').textContent = titles[state.view][1];
+  document.getElementById('page-title').textContent = (titles[state.view] || titles.dashboard)[0];
+  document.getElementById('page-subtitle').textContent = (titles[state.view] || titles.dashboard)[1];
 
   if (['methodology','api','glossary'].includes(state.view)) {
     document.getElementById('view-' + state.view).classList.remove('hidden');
     return;
   }
 
+  if (state.view === 'compare') {
+    document.getElementById('view-compare').classList.remove('hidden');
+    initCompareSelects();
+    renderCompare();
+    return;
+  }
+
   document.getElementById('view-stocks').classList.remove('hidden');
+
+  // Check signal changes after live refresh
+  const changes = checkSignalChanges(enriched);
+  if (changes.length > 0) showSignalAlerts(changes);
+
   renderStats();
   renderTable();
 }
@@ -3119,7 +3446,7 @@ function renderTable() {
       <tr onclick="openModal('${s.ticker}')">
         <td>
           <div class="cell-ticker">
-            <span class="ticker">${s.ticker}</span>
+            <span class="ticker">${s.ticker}${earningsBadgeHtml(s.ticker)}</span>
             <span class="company-name">${s.name}</span>
           </div>
         </td>
@@ -3218,6 +3545,7 @@ function openModal(ticker) {
           </div>
           <div class="verdict-detail">${verdictText}</div>
           ${s.catalyst ? `<div class="verdict-detail" style="margin-top:8px;color:var(--accent);"><strong>Catalizador:</strong> ${s.catalyst}</div>` : ''}
+          ${(() => { const d = daysToEarnings(s.ticker); if(d===null||d<0) return ''; const cls=d<=7?'earnings-soon':''; const lbl=d===0?'HOY':d===1?'Mañana':`en ${d} días`; return `<div class="verdict-detail" style="margin-top:8px;"><strong>📅 Earnings:</strong> <span class="earnings-badge ${cls}">${lbl} · ${EARNINGS[s.ticker]}</span></div>`; })()}
         </div>
       </div>
 
@@ -3295,6 +3623,21 @@ function openModal(ticker) {
       <div style="margin-top:24px;padding:16px;background:var(--bg-elevated);border-radius:10px;font-size:12px;color:var(--text-tertiary);line-height:1.6;">
         <strong style="color:var(--text-secondary);">Importante:</strong> Esta no es una recomendación financiera. Los scores son cálculos matemáticos basados en métricas estándar de mercado. Antes de operar verifica los datos en fuente oficial (página de relaciones con inversionistas de la empresa, SEC EDGAR), considera tu situación personal, y consulta con un asesor si necesitas. Datos en vivo solo si conectaste API en la pestaña <em>Conectar datos en vivo</em>.
       </div>
+
+      <!-- WATCHLIST NOTES & ENTRY -->
+      <div class="modal-section-title" style="margin-top:24px;">⭐ Mi nota personal</div>
+      <div class="wl-note-wrap">
+        <textarea class="wl-note-input" id="note-${s.ticker}" placeholder="Escribe tu tesis de inversión, recordatorios, por qué te interesa esta acción...">${wlNotes[s.ticker] || ''}</textarea>
+        <input class="wl-entry-input" id="entry-${s.ticker}" type="number" step="0.01" placeholder="Precio de entrada objetivo (ej: 45.50)" value="${wlEntry[s.ticker] || ''}">
+        ${wlEntry[s.ticker] ? `<div class="wl-entry-display">P&L vs entrada: <span class="${s.price >= wlEntry[s.ticker] ? 'wl-pnl-pos' : 'wl-pnl-neg'}">${s.price >= wlEntry[s.ticker] ? '+' : ''}${(((s.price - wlEntry[s.ticker]) / wlEntry[s.ticker]) * 100).toFixed(2)}%</span></div>` : ''}
+        <button class="wl-save-btn" onclick="saveWlNote('${s.ticker}', document.getElementById('note-${s.ticker}').value); saveWlEntry('${s.ticker}', document.getElementById('entry-${s.ticker}').value); alert('✓ Guardado');">Guardar nota</button>
+      </div>
+
+      <!-- NOTICIAS -->
+      <div class="modal-section-title" style="margin-top:24px;">📰 Noticias recientes</div>
+      <div id="news-${s.ticker}" class="news-list">
+        <div class="news-loading">Cargando noticias${apiKey ? '...' : ' — conecta API para ver noticias en vivo'}</div>
+      </div>
     </div>
   `;
 
@@ -3325,6 +3668,158 @@ document.getElementById('modal').addEventListener('click', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
+});
+
+/* ===== NEWS FETCH ===== */
+async function fetchNews(ticker) {
+  if (!apiKey) return;
+  const el = document.getElementById(`news-${ticker}`);
+  if (!el) return;
+  try {
+    const to = new Date().toISOString().slice(0,10);
+    const from = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+    const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${from}&to=${to}&token=${apiKey}`);
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      el.innerHTML = '<div class="news-loading">Sin noticias recientes</div>';
+      return;
+    }
+    const top = data.slice(0,5);
+    el.innerHTML = top.map(n => {
+      const d = new Date(n.datetime * 1000).toLocaleDateString('es-CO', {month:'short', day:'numeric'});
+      return `<div class="news-item" onclick="window.open('${n.url}','_blank')">
+        <div class="news-item-headline">${n.headline}</div>
+        <div class="news-item-meta">${n.source} · ${d}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="news-loading">Error cargando noticias</div>';
+  }
+}
+
+// Auto-fetch news when modal opens
+const _origOpenModal = openModal;
+function openModal(ticker) {
+  _origOpenModal(ticker);
+  setTimeout(() => fetchNews(ticker), 200);
+}
+
+/* ===== SIGNAL ALERTS ===== */
+function showSignalAlerts(changes) {
+  const sells = changes.filter(c => c.to === 'sell' || c.to === 'strong-sell');
+  const buys  = changes.filter(c => c.to === 'buy'  || c.to === 'strong-buy');
+  if (sells.length === 0 && buys.length === 0) return;
+  let msg = '🔔 Cambios de señal detectados:\n';
+  sells.forEach(c => msg += `⚠️ ${c.ticker}: ${c.from} → ${c.to}\n`);
+  buys.forEach(c =>  msg += `✅ ${c.ticker}: ${c.from} → ${c.to}\n`);
+  // Show as toast instead of alert
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;top:20px;right:20px;z-index:9000;background:var(--bg-elevated);border:1px solid rgba(239,68,68,0.4);border-radius:12px;padding:16px 20px;font-size:13px;max-width:300px;white-space:pre-line;box-shadow:0 8px 32px rgba(0,0,0,0.4);`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 6000);
+}
+
+/* ===== COMPARE ===== */
+function initCompareSelects() {
+  const opts = enriched.map(s => `<option value="${s.ticker}">${s.ticker} — ${s.name}</option>`).join('');
+  ['compare-a','compare-b'].forEach(id => {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">— Selecciona acción —</option>${opts}`;
+    if (prev) sel.value = prev;
+  });
+}
+
+function renderCompare() {
+  const ta = document.getElementById('compare-a').value;
+  const tb = document.getElementById('compare-b').value;
+  const grid = document.getElementById('compare-grid');
+  if (!ta || !tb) {
+    grid.innerHTML = '<div class="compare-empty">Selecciona dos acciones para comparar sus métricas lado a lado</div>';
+    return;
+  }
+  const a = enriched.find(s => s.ticker === ta);
+  const b = enriched.find(s => s.ticker === tb);
+  if (!a || !b) return;
+
+  const rows = [
+    ['Precio', s => `$${s.price.toFixed(2)}`, null],
+    ['Score', s => s.primaryScore, (av,bv) => av > bv],
+    ['Señal', s => s.signal.label, null],
+    ['P/E', s => s.pe || null, (av,bv) => av !== null && bv !== null && av < bv],
+    ['Forward P/E', s => s.forwardPE || null, (av,bv) => av !== null && bv !== null && av < bv],
+    ['P/B', s => s.pb ? s.pb.toFixed(2) : null, (av,bv) => av !== null && bv !== null && parseFloat(av) < parseFloat(bv)],
+    ['ROE %', s => s.roe ? s.roe.toFixed(1)+'%' : null, (av,bv) => av !== null && bv !== null && parseFloat(av) > parseFloat(bv)],
+    ['Margen Op.', s => s.opMargin ? s.opMargin.toFixed(1)+'%' : null, (av,bv) => av !== null && bv !== null && parseFloat(av) > parseFloat(bv)],
+    ['Dividendo', s => s.dividendYield ? s.dividendYield.toFixed(2)+'%' : '0%', (av,bv) => parseFloat(av) > parseFloat(bv)],
+    ['RSI', s => s.rsi, (av,bv) => Math.abs(av-50) < Math.abs(bv-50)],
+    ['Earnings', s => { const d=daysToEarnings(s.ticker); return d!==null&&d>=0?`${d}d`:'—'; }, null],
+    ['Cap. Mercado', s => formatCap(s.marketCap), null],
+    ['Analistas', s => s.analyst ? s.analyst.toFixed(1)+'/5' : '—', (av,bv) => parseFloat(av) > parseFloat(bv)],
+  ];
+
+  const buildCard = (s, other, isA) => {
+    const scoreColor = scoreToColor(s.primaryScore);
+    const rowsHtml = rows.map(([label, getter, better]) => {
+      const sv = getter(s);
+      const ov = getter(other);
+      let cls = '';
+      if (better && sv !== null && ov !== null) {
+        cls = better(sv, ov) ? 'compare-winner' : 'compare-loser';
+      }
+      return `<div class="compare-metric-row">
+        <span class="compare-metric-label">${label}</span>
+        <span class="compare-metric-val ${cls}">${sv !== null ? sv : '—'}</span>
+      </div>`;
+    }).join('');
+    return `<div class="compare-card">
+      <div class="compare-card-ticker" style="color:${scoreColor}">${s.ticker}</div>
+      <div class="compare-card-name">${s.name}</div>
+      ${rowsHtml}
+    </div>`;
+  };
+
+  grid.innerHTML = buildCard(a, b, true) + buildCard(b, a, false);
+}
+
+/* ===== PWA ===== */
+// Inject manifest dynamically
+const manifestData = {
+  name: 'BURSASCAN',
+  short_name: 'BURSASCAN',
+  description: 'Tu radar financiero personal — NYSE & NASDAQ',
+  start_url: './',
+  display: 'standalone',
+  background_color: '#0a0d14',
+  theme_color: '#0a0d14',
+  icons: [{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%230a0d14"/><circle cx="30" cy="50" r="8" fill="%2300d9ff"/><text x="45" y="58" font-family="sans-serif" font-weight="bold" font-size="28" fill="white">BS</text></svg>', sizes:'192x192', type:'image/svg+xml'}]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
+const manifestUrl = URL.createObjectURL(blob);
+document.getElementById('pwa-manifest').href = manifestUrl;
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('pwa_dismissed')) {
+    setTimeout(() => { document.getElementById('pwa-banner').style.display = 'block'; }, 3000);
+  }
+});
+
+document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
+  document.getElementById('pwa-banner').style.display = 'none';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  }
+});
+
+document.getElementById('pwa-dismiss-btn')?.addEventListener('click', () => {
+  document.getElementById('pwa-banner').style.display = 'none';
+  localStorage.setItem('pwa_dismissed', '1');
 });
 
 /* ===== FAV / WATCHLIST ===== */
@@ -3675,5 +4170,15 @@ updateApiUI();
 updateTimestampUI();
 render();
 </script>
+
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-banner">
+  <div class="pwa-banner-title">📱 Instalar BURSASCAN</div>
+  <div class="pwa-banner-sub">Agrégala a tu pantalla de inicio para acceder como app nativa</div>
+  <div class="pwa-banner-btns">
+    <button class="pwa-install-btn" id="pwa-install-btn">Instalar</button>
+    <button class="pwa-dismiss-btn" id="pwa-dismiss-btn">Ahora no</button>
+  </div>
+</div>
 </body>
 </html>
