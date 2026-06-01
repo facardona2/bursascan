@@ -4197,6 +4197,7 @@ function openModal(ticker) {
 
   document.getElementById('modal-content').innerHTML = html;
   document.getElementById('modal').classList.add('show');
+  setTimeout(() => fetchNews(ticker), 200);
 }
 
 function metric(label, val, display, colorFn, tooltip) {
@@ -4249,13 +4250,6 @@ async function fetchNews(ticker) {
   } catch(e) {
     el.innerHTML = '<div class="news-loading">Error cargando noticias</div>';
   }
-}
-
-// Auto-fetch news when modal opens
-const _origOpenModal = openModal;
-function openModal(ticker) {
-  _origOpenModal(ticker);
-  setTimeout(() => fetchNews(ticker), 200);
 }
 
 /* ===== SIGNAL ALERTS ===== */
@@ -4348,6 +4342,31 @@ function mobileNav(el, view) {
 }
 
 /* ===== PWA ===== */
+// Register service worker for Android/Chrome install prompt
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'bursascan-v2';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      ));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/')))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
 // Inject manifest dynamically
 const manifestData = {
   name: 'BURSASCAN',
@@ -4357,34 +4376,83 @@ const manifestData = {
   display: 'standalone',
   background_color: '#0a0d14',
   theme_color: '#0a0d14',
-  icons: [{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%230a0d14"/><circle cx="30" cy="50" r="8" fill="%2300d9ff"/><text x="45" y="58" font-family="sans-serif" font-weight="bold" font-size="28" fill="white">BS</text></svg>', sizes:'192x192', type:'image/svg+xml'}]
+  orientation: 'portrait',
+  icons: [
+    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="%230a0d14"/><circle cx="52" cy="96" r="16" fill="%2300d9ff"/><text x="76" y="112" font-family="sans-serif" font-weight="bold" font-size="56" fill="white">BS</text></svg>', sizes: '192x192', type: 'image/svg+xml' },
+    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="%230a0d14"/><circle cx="140" cy="256" r="42" fill="%2300d9ff"/><text x="200" y="300" font-family="sans-serif" font-weight="bold" font-size="148" fill="white">BS</text></svg>', sizes: '512x512', type: 'image/svg+xml' }
+  ]
 };
-const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
+const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
 const manifestUrl = URL.createObjectURL(blob);
 document.getElementById('pwa-manifest').href = manifestUrl;
 
+// Android/Chrome: beforeinstallprompt
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
   if (!localStorage.getItem('pwa_dismissed')) {
-    setTimeout(() => { document.getElementById('pwa-banner').style.display = 'block'; }, 3000);
+    setTimeout(() => {
+      const banner = document.getElementById('pwa-banner');
+      if (banner) banner.style.display = 'block';
+    }, 2000);
   }
 });
 
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('pwa-banner');
+  if (banner) banner.style.display = 'none';
+  deferredPrompt = null;
+});
+
 document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
-  document.getElementById('pwa-banner').style.display = 'none';
+  const banner = document.getElementById('pwa-banner');
+  if (banner) banner.style.display = 'none';
   if (deferredPrompt) {
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     deferredPrompt = null;
+  } else {
+    // iOS fallback — mostrar instrucciones
+    showIosInstallInstructions();
   }
 });
 
 document.getElementById('pwa-dismiss-btn')?.addEventListener('click', () => {
-  document.getElementById('pwa-banner').style.display = 'none';
+  const banner = document.getElementById('pwa-banner');
+  if (banner) banner.style.display = 'none';
   localStorage.setItem('pwa_dismissed', '1');
 });
+
+// iOS no soporta beforeinstallprompt — detectar y mostrar banner manual
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isInStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+}
+if (isIos() && !isInStandaloneMode() && !localStorage.getItem('pwa_dismissed')) {
+  setTimeout(() => {
+    const banner = document.getElementById('pwa-banner');
+    const sub = banner?.querySelector('.pwa-banner-sub');
+    if (sub) sub.textContent = 'Toca el botón compartir ⬆ y luego "Agregar a pantalla de inicio"';
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.textContent = 'Ver cómo';
+    if (banner) banner.style.display = 'block';
+  }, 2000);
+}
+
+function showIosInstallInstructions() {
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;bottom:80px;left:10px;right:10px;z-index:9000;background:#1a1f2e;border:1px solid rgba(0,217,255,0.4);border-radius:14px;padding:18px 20px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,0.6);line-height:1.6;`;
+  toast.innerHTML = `<div style="font-weight:700;margin-bottom:8px;">📱 Instalar en iPhone/iPad</div>
+    <div style="color:#9ba3b4;">1. Toca el botón <strong style="color:#fff;">⬆ Compartir</strong> en Safari<br>
+    2. Baja y toca <strong style="color:#fff;">"Agregar a pantalla de inicio"</strong><br>
+    3. Toca <strong style="color:#fff;">"Agregar"</strong> — listo ✓</div>
+    <button onclick="this.parentElement.remove()" style="margin-top:12px;background:rgba(0,217,255,0.15);color:#00d9ff;border:1px solid rgba(0,217,255,0.3);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Entendido</button>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 12000);
+}
 
 /* ===== FAV / WATCHLIST ===== */
 function toggleFav(ticker) {
@@ -4743,9 +4811,9 @@ render();
 <!-- PWA INSTALL BANNER -->
 <div id="pwa-banner">
   <div class="pwa-banner-title">📱 Instalar BURSASCAN</div>
-  <div class="pwa-banner-sub">Agrégala a tu pantalla de inicio para acceder como app nativa</div>
+  <div class="pwa-banner-sub">Instálala como app en tu celular — acceso directo desde la pantalla de inicio</div>
   <div class="pwa-banner-btns">
-    <button class="pwa-install-btn" id="pwa-install-btn">Instalar</button>
+    <button class="pwa-install-btn" id="pwa-install-btn">📲 Instalar</button>
     <button class="pwa-dismiss-btn" id="pwa-dismiss-btn">Ahora no</button>
   </div>
 </div>
