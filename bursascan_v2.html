@@ -1,0 +1,3679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0d14">
+<title>BURSASCAN · Tu radar financiero personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================== DESIGN TOKENS ===================== */
+:root {
+  --bg-base: #0a0d14;
+  --bg-surface: #11151f;
+  --bg-elevated: #1a1f2e;
+  --bg-hover: #232a3d;
+  --border: #232a3d;
+  --border-strong: #2e3548;
+  --text-primary: #e8eaed;
+  --text-secondary: #9ba3b4;
+  --text-tertiary: #5c6578;
+  --accent: #00d9ff;
+  --accent-dim: rgba(0, 217, 255, 0.15);
+  --buy: #22c55e;
+  --buy-strong: #00ff88;
+  --buy-bg: rgba(34, 197, 94, 0.12);
+  --sell: #ef4444;
+  --sell-strong: #ff3366;
+  --sell-bg: rgba(239, 68, 68, 0.12);
+  --hold: #f59e0b;
+  --hold-bg: rgba(245, 158, 11, 0.12);
+  --gold: #fbbf24;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.5;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(0, 217, 255, 0.04), transparent 40%),
+    radial-gradient(circle at 90% 100%, rgba(34, 197, 94, 0.03), transparent 50%);
+  background-attachment: fixed;
+}
+
+/* subtle grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===================== LAYOUT ===================== */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  position: relative;
+  z-index: 2;
+}
+
+/* ===================== SIDEBAR ===================== */
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  padding: 28px 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.logo-sub {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.logo-tagline {
+  font-size: 11px;
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  padding: 16px 12px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(0, 217, 255, 0.25);
+}
+
+.nav-item .count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-elevated);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.nav-item.active .count {
+  background: rgba(0, 217, 255, 0.2);
+  color: var(--accent);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+
+/* ===================== MAIN ===================== */
+.main {
+  padding: 28px 36px 60px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ===== SPLASH SCREEN ===== */
+#splash {
+  position: fixed;
+  inset: 0;
+  background: #070a10;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: splashFadeOut 0.6s ease-in-out 2.8s forwards;
+}
+
+@keyframes splashFadeOut {
+  to { opacity: 0; pointer-events: none; visibility: hidden; }
+}
+
+.splash-logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 8vw, 80px);
+  letter-spacing: -0.04em;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: splashDrop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes splashDrop {
+  from { opacity: 0; transform: translateY(-30px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.splash-logo-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 30px var(--accent), 0 0 60px rgba(0,217,255,0.4);
+  animation: splashPulse 1s ease-in-out 0.9s infinite alternate;
+}
+
+@keyframes splashPulse {
+  from { transform: scale(1); box-shadow: 0 0 20px var(--accent); }
+  to   { transform: scale(1.3); box-shadow: 0 0 40px var(--accent), 0 0 80px rgba(0,217,255,0.5); }
+}
+
+.splash-tagline {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  animation: splashFade 0.6s ease 0.8s both;
+}
+
+@keyframes splashFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.splash-bar-wrap {
+  width: 240px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  animation: splashFade 0.4s ease 1.0s both;
+}
+
+.splash-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--buy));
+  border-radius: 2px;
+  animation: splashLoad 1.6s cubic-bezier(0.4,0,0.2,1) 1.0s both;
+}
+
+@keyframes splashLoad {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.splash-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: splashFade 0.4s ease 1.0s both;
+}
+
+/* ===== HERO BANNER ===== */
+.hero-banner {
+  background: linear-gradient(135deg, rgba(0,217,255,0.06) 0%, rgba(34,197,94,0.04) 50%, rgba(0,0,0,0) 100%);
+  border: 1px solid rgba(0,217,255,0.15);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,217,255,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.hero-title span {
+  background: linear-gradient(90deg, var(--accent), var(--buy));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat-num {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+
+@media (max-width: 640px) {
+  .hero-banner { flex-direction: column; align-items: flex-start; }
+  .hero-stats { gap: 16px; }
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hold);
+  box-shadow: 0 0 8px var(--hold);
+}
+
+/* ===================== BANNER ===================== */
+.banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.banner-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.banner-text strong {
+  color: var(--hold);
+  font-weight: 600;
+}
+
+/* ===================== STATS GRID ===================== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+}
+
+.stat-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.stat-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.stat-card.buy .stat-value { color: var(--buy); }
+.stat-card.sell .stat-value { color: var(--sell); }
+.stat-card.hold .stat-value { color: var(--hold); }
+.stat-card.accent .stat-value { color: var(--accent); }
+
+/* ===================== FILTERS ===================== */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.filter-chip {
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.filter-chip:hover {
+  color: var(--text-primary);
+}
+
+.filter-chip.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  margin-left: auto;
+}
+
+.search input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  transition: all var(--transition);
+}
+
+.search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.search input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ===================== STOCK TABLE ===================== */
+.table-wrap {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+th {
+  padding: 12px 14px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+th.sortable { cursor: pointer; transition: color var(--transition); }
+th.sortable:hover { color: var(--accent); }
+
+td {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+tbody tr:hover {
+  background: var(--bg-elevated);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cell-ticker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ticker {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.company-name {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.cell-price {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cell-change {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.cell-change.up { color: var(--buy); }
+.cell-change.down { color: var(--sell); }
+
+.score-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-bar {
+  width: 70px;
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 600ms ease;
+}
+
+.score-num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 28px;
+}
+
+.signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.signal.strong-buy { background: var(--buy-bg); color: var(--buy-strong); border: 1px solid rgba(0, 255, 136, 0.25); }
+.signal.buy { background: var(--buy-bg); color: var(--buy); }
+.signal.hold { background: var(--hold-bg); color: var(--hold); }
+.signal.sell { background: var(--sell-bg); color: var(--sell); }
+.signal.strong-sell { background: var(--sell-bg); color: var(--sell-strong); border: 1px solid rgba(255, 51, 102, 0.25); }
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tag.value { color: var(--accent); background: var(--accent-dim); }
+.tag.penny { color: var(--gold); background: rgba(251, 191, 36, 0.12); }
+.tag.sell { color: var(--sell); background: var(--sell-bg); }
+
+.xtb-yes { color: var(--buy); font-family: var(--font-mono); font-size: 14px; }
+.xtb-no { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 14px; }
+
+.fav-btn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: all var(--transition);
+}
+
+.fav-btn:hover { color: var(--gold); }
+.fav-btn.active { color: var(--gold); }
+
+/* ===================== EMPTY STATE ===================== */
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+/* ===================== MODAL ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 200ms ease;
+}
+
+.modal-overlay.show { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  max-width: 920px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: slideUp 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.modal-title-block { flex: 1; }
+
+.modal-ticker {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.modal-company {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.modal-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.modal-meta-item {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.modal-meta-item strong { color: var(--text-secondary); }
+
+.modal-price-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.modal-price {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.modal-change {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition);
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.modal-body { padding: 28px 32px; }
+
+.verdict-block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.verdict-score {
+  text-align: center;
+}
+
+.score-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: conic-gradient(var(--score-color) calc(var(--score) * 1%), var(--bg-hover) 0);
+}
+
+.score-circle::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: var(--bg-elevated);
+  border-radius: 50%;
+}
+
+.score-circle-inner {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.verdict-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+}
+
+.verdict-info { flex: 1; }
+
+.verdict-text {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.verdict-detail {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.modal-section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 24px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-section-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.metric {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.help-icon {
+  cursor: help;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  transition: color var(--transition);
+}
+
+.help-icon:hover { color: var(--accent); border-color: var(--accent); }
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.metric-value.good { color: var(--buy); }
+.metric-value.bad { color: var(--sell); }
+.metric-value.warn { color: var(--hold); }
+
+.metric-note {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+.score-breakdown {
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.breakdown-row:last-child { border-bottom: none; }
+
+.breakdown-factor { color: var(--text-secondary); }
+
+.breakdown-impact {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.breakdown-impact.pos { color: var(--buy); }
+.breakdown-impact.neg { color: var(--sell); }
+.breakdown-impact.neu { color: var(--text-tertiary); }
+
+.breakdown-detail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+/* ===================== PANELS (Settings, Help, etc) ===================== */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px;
+  margin-bottom: 20px;
+}
+
+.panel h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.panel h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+  color: var(--accent);
+}
+
+.panel p {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.65;
+}
+
+.panel code {
+  background: var(--bg-elevated);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.panel pre {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 12px 0;
+  line-height: 1.5;
+}
+
+.panel ul {
+  color: var(--text-secondary);
+  margin: 12px 0;
+  padding-left: 22px;
+  line-height: 1.7;
+}
+
+.panel ul li { margin-bottom: 6px; }
+.panel ul li strong { color: var(--text-primary); }
+
+.method-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+.method-card h4 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.method-card .badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.method-card .badge.paid { background: var(--hold-bg); color: var(--hold); }
+
+.method-card p { font-size: 13px; margin-bottom: 0; }
+
+/* ===================== CONNECT / LIVE DATA ===================== */
+.connect-card {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(0, 217, 255, 0.02));
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.connect-card h3 {
+  color: var(--accent);
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.connect-card .steps {
+  list-style: decimal;
+  padding-left: 22px;
+  margin: 14px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.connect-card .steps li strong { color: var(--text-primary); }
+.connect-card .steps a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+
+.api-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.api-form input {
+  flex: 1;
+  min-width: 240px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.api-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn {
+  background: var(--accent);
+  color: var(--bg-base);
+  border: none;
+  border-radius: 8px;
+  padding: 11px 18px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn.btn-ghost {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn.btn-ghost:hover { background: var(--bg-hover); }
+
+.btn.btn-danger {
+  background: var(--bg-elevated);
+  color: var(--sell);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.connect-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.connect-status.success { border-color: rgba(34, 197, 94, 0.3); color: var(--buy); }
+.connect-status.error { border-color: rgba(239, 68, 68, 0.3); color: var(--sell); }
+
+.refresh-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.refresh-btn {
+  background: var(--accent);
+  color: var(--bg-base);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+
+.refresh-btn:hover { filter: brightness(1.1); }
+.refresh-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.refresh-btn .spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.timestamp-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timestamp-pill .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hold);
+  box-shadow: 0 0 8px var(--hold);
+}
+
+.timestamp-pill.live .live-dot {
+  background: var(--buy);
+  box-shadow: 0 0 8px var(--buy);
+  animation: pulse 2s infinite;
+}
+
+/* Progress overlay */
+.fetch-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 13, 20, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 150;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.fetch-overlay.show { display: flex; }
+
+.fetch-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.fetch-card h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.fetch-status {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 16px;
+  font-family: var(--font-mono);
+  min-height: 18px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--buy-strong));
+  border-radius: 4px;
+  transition: width 240ms ease;
+  width: 0%;
+}
+
+.progress-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.fetch-log {
+  margin-top: 14px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.6;
+}
+
+.fetch-log .ok { color: var(--buy); }
+.fetch-log .err { color: var(--sell); }
+
+/* ===================== CHARTS ===================== */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.chart-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.chart-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-svg-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.donut-wrap {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.donut-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.donut-legend-item {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.donut-legend-count {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Per-stock modal charts */
+.stock-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0 8px;
+}
+
+.stock-chart-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.stock-chart-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.range-bar-svg, .rsi-gauge-svg, .triscore-svg {
+  width: 100%;
+  display: block;
+}
+
+@media (max-width: 1100px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .stock-charts { grid-template-columns: 1fr; }
+}
+
+/* ===================== HIDDEN ===================== */
+.hidden { display: none !important; }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 820px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed;
+    left: -240px;
+    z-index: 50;
+    transition: left var(--transition);
+  }
+  .sidebar.open { left: 0; }
+  .main { padding: 20px 16px 40px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-value { font-size: 22px; }
+  .page-title { font-size: 24px; }
+  .table-wrap { overflow-x: auto; }
+  table { min-width: 760px; }
+  .verdict-block { grid-template-columns: 1fr; text-align: center; }
+  .modal-header { flex-direction: column; }
+  .modal-price-block { text-align: left; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  .menu-toggle { display: flex !important; }
+}
+
+.menu-toggle {
+  display: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  align-items: center;
+}
+
+/* tooltip */
+[data-tooltip] { position: relative; }
+
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-base);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-body);
+  white-space: normal;
+  width: 240px;
+  z-index: 200;
+  margin-bottom: 6px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.4;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SPLASH SCREEN ===== -->
+<div id="splash">
+  <div class="splash-logo">
+    <div class="splash-logo-dot"></div>
+    BURSASCAN
+  </div>
+  <div class="splash-tagline">Tu radar personal de oportunidades en bolsa</div>
+  <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+  <div class="splash-sub">NYSE · NASDAQ · 89 acciones · XTB</div>
+</div>
+
+<div class="app">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      BURSASCAN
+    </div>
+    <div class="logo-sub">NYSE · NASDAQ · v2.0</div>
+    <div class="logo-tagline">Tu radar personal de<br>oportunidades en bolsa</div>
+
+    <div class="nav-section-label">Paneles</div>
+    <div class="nav-item active" data-view="dashboard">
+      <span>📊</span> Dashboard <span class="count" id="count-all">—</span>
+    </div>
+    <div class="nav-item" data-view="value">
+      <span>💎</span> Value (descuento) <span class="count" id="count-value">—</span>
+    </div>
+    <div class="nav-item" data-view="penny">
+      <span>🚀</span> Especulativas/Recovery <span class="count" id="count-penny">—</span>
+    </div>
+    <div class="nav-item" data-view="sell">
+      <span>⚠️</span> Sobrevaloradas <span class="count" id="count-sell">—</span>
+    </div>
+    <div class="nav-item" data-view="watchlist">
+      <span>⭐</span> Mi watchlist <span class="count" id="count-watch">0</span>
+    </div>
+
+    <div class="nav-section-label">Info</div>
+    <div class="nav-item" data-view="methodology">
+      <span>📐</span> Metodología
+    </div>
+    <div class="nav-item" data-view="api">
+      <span>🔌</span> Conectar datos en vivo
+    </div>
+    <div class="nav-item" data-view="glossary">
+      <span>📖</span> Glosario
+    </div>
+
+    <div class="sidebar-footer">
+      89 acciones · Todo en XTB<br>
+      DATA SNAPSHOT 2026<br>
+      No es asesoría financiera
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    <!-- HERO BANNER -->
+    <div class="hero-banner" id="hero-banner">
+      <div>
+        <div class="hero-title">Tu <span>radar financiero</span> personal</div>
+        <div class="hero-sub">89 acciones NYSE · NASDAQ — todas disponibles en XTB.<br>Filtra, analiza y detecta oportunidades con datos reales.</div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num" id="hero-buy">—</div>
+          <div class="hero-stat-label">Compras</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num" id="hero-total">89</div>
+          <div class="hero-stat-label">Acciones</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num" id="hero-watch">—</div>
+          <div class="hero-stat-label">Watchlist</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <div>
+        <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <h1 class="page-title" id="page-title">Dashboard</h1>
+        <div class="page-subtitle" id="page-subtitle">Vista general de señales en todo el universo escaneado</div>
+      </div>
+      <div class="refresh-controls">
+        <div class="timestamp-pill" id="timestamp-pill">
+          <div class="live-dot"></div>
+          <span id="timestamp-text">DATA: SNAPSHOT</span>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" onclick="refreshLiveData()" style="display:none;">
+          <span id="refresh-icon">⟳</span> Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- BANNER -->
+    <div class="banner" id="banner">
+      <div class="banner-icon">⚠️</div>
+      <div class="banner-text">
+        <strong>Advertencia importante:</strong> Los scores son cálculos matemáticos basados en métricas estándar — <strong>no son recomendaciones financieras</strong>. Las penny stocks especulativas son extremadamente riesgosas; arriesga sólo capital que puedas perder. Cuando los datos están en SNAPSHOT, las cifras son una muestra ilustrativa. Para tiempo real conecta una API en la pestaña <em>Conectar datos en vivo</em>.
+      </div>
+    </div>
+
+    <!-- VIEWS -->
+    <div id="view-stocks">
+      <!-- STATS -->
+      <div class="stats" id="stats"></div>
+
+      <!-- CHARTS -->
+      <div class="charts-grid" id="charts-grid"></div>
+
+      <!-- FILTERS -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <button class="filter-chip active" data-signal="all">Todas</button>
+          <button class="filter-chip" data-signal="buy">Comprar</button>
+          <button class="filter-chip" data-signal="hold">Mantener</button>
+          <button class="filter-chip" data-signal="sell">Vender</button>
+        </div>
+        <div class="filter-group">
+          <button class="filter-chip" data-xtb="all">Todas</button>
+          <button class="filter-chip active" data-xtb="yes">Solo XTB</button>
+        </div>
+        <div class="search">
+          <input type="text" id="search" placeholder="Buscar ticker o empresa...">
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th class="sortable" data-sort="price">Precio</th>
+              <th class="sortable" data-sort="change">Cambio</th>
+              <th class="sortable" data-sort="score">Score / Señal</th>
+              <th>Tipo</th>
+              <th class="sortable" data-sort="pe">P/E</th>
+              <th class="sortable" data-sort="marketCap">Cap</th>
+              <th>XTB</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+        <div class="empty hidden" id="empty">No hay acciones que coincidan con los filtros.</div>
+      </div>
+    </div>
+
+    <!-- METHODOLOGY -->
+    <div id="view-methodology" class="hidden">
+      <div class="panel">
+        <h2>📐 Cómo funciona BURSASCAN</h2>
+        <p>El escáner combina <strong>análisis fundamental</strong> (salud y valoración del negocio), <strong>análisis técnico</strong> (precio, momentum, volumen) y <strong>contexto del mercado</strong> (catalizadores, sentimiento). Cada acción recibe tres scores independientes y se clasifica en el panel que mejor le corresponde.</p>
+
+        <h3>Score Value (0-100) — para acciones sólidas con descuento</h3>
+        <ul>
+          <li><strong>P/E ratio:</strong> bajo P/E suma puntos. P/E < 12 = excelente, 12-18 = razonable, > 30 = caro.</li>
+          <li><strong>P/B ratio:</strong> precio sobre valor en libros. < 1 = empresa cotiza bajo sus activos netos (bandera value).</li>
+          <li><strong>PEG ratio:</strong> P/E ajustado por crecimiento. < 1 = subvalorado relativo a su crecimiento.</li>
+          <li><strong>ROE:</strong> retorno sobre capital. > 15% = empresa eficiente generando ganancia.</li>
+          <li><strong>Deuda/Patrimonio:</strong> < 1 = saludable; > 2 = riesgoso.</li>
+          <li><strong>Free Cash Flow positivo:</strong> la empresa genera caja real (no solo contabilidad).</li>
+          <li><strong>Descuento desde máximo 52 semanas:</strong> entre 20-40% es el sweet spot value (caída fuerte sin ser trampa).</li>
+          <li><strong>RSI:</strong> 30-50 indica sin sobrecompra, posible suelo.</li>
+          <li><strong>Dividendo sostenible:</strong> yield > 3% con cobertura adecuada.</li>
+        </ul>
+
+        <h3>Score Penny / Especulativo (0-100)</h3>
+        <ul>
+          <li><strong>Volumen relativo:</strong> volumen actual vs promedio 30d. >2x = interés institucional o catalizador.</li>
+          <li><strong>Float bajo:</strong> < 50M acciones = más sensible a movimientos (squeeze potencial).</li>
+          <li><strong>Short interest > 20%:</strong> alto short = posible short squeeze si hay catalizador positivo.</li>
+          <li><strong>Cash runway:</strong> meses de caja que le quedan a la empresa. < 6 meses = altísimo riesgo de dilución/quiebra.</li>
+          <li><strong>Catalizador identificable:</strong> earnings, FDA, contrato, fusión, etc.</li>
+          <li><strong>Patrón técnico:</strong> breakout, soporte fuerte, formación alcista.</li>
+        </ul>
+
+        <h3>Score Vender / Sobrevalorada (0-100, alto = vender más fuerte)</h3>
+        <ul>
+          <li><strong>RSI > 70:</strong> sobrecompra técnica.</li>
+          <li><strong>Precio > 30% sobre media 200d:</strong> extendido, alta probabilidad de corrección.</li>
+          <li><strong>P/E > 2x el sector:</strong> caro en términos relativos.</li>
+          <li><strong>Insider selling fuerte:</strong> los que más saben están saliendo.</li>
+          <li><strong>EPS growth desacelerándose:</strong> la historia de crecimiento puede estar terminando.</li>
+        </ul>
+
+        <h3>Niveles de recomendación</h3>
+        <ul>
+          <li><strong>80-100:</strong> COMPRA FUERTE — alineación de múltiples factores positivos.</li>
+          <li><strong>65-79:</strong> COMPRA — perfil atractivo con algunos riesgos manejables.</li>
+          <li><strong>45-64:</strong> MANTENER — neutral, esperar mejor punto de entrada/salida.</li>
+          <li><strong>30-44:</strong> VENDER — valoración o técnica deteriorada.</li>
+          <li><strong>0-29:</strong> VENDER FUERTE — múltiples señales de salida.</li>
+        </ul>
+
+        <h3>Reglas de salida para acciones que tenías compradas</h3>
+        <p>El panel <em>Sobrevaloradas</em> también te avisa cuando una acción que sigues alcanzó territorio de venta. La regla general que aplico:</p>
+        <ul>
+          <li>Si una acción que compraste subió +50% y su Score Value cayó por debajo de 40 → considera tomar al menos 50% de ganancia.</li>
+          <li>Si el RSI supera 80 en gráfico semanal → muy extendida, trailing stop ajustado.</li>
+          <li>Si el P/E se duplicó desde tu compra sin un cambio fundamental (nuevos productos, márgenes mayores) → es expansión de múltiplo, no más valor real.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- API CONNECTION -->
+    <div id="view-api" class="hidden">
+      <div class="connect-card">
+        <h3>⚡ Conectar Finnhub (recomendado)</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:0;">Finnhub te da datos reales de cotización + fundamentales (P/E, P/B, ROE, dividendo, máx/mín 52sem) gratis. 60 llamadas/min — suficiente para escanear los 30 tickers cada 2 minutos.</p>
+
+        <ol class="steps">
+          <li>Ve a <a href="https://finnhub.io/register" target="_blank" rel="noopener">finnhub.io/register</a> y crea una cuenta gratis (solo email)</li>
+          <li>Confirma tu correo, entra al dashboard y copia tu <strong>API key</strong></li>
+          <li>Pégala aquí abajo y dale a <strong>Conectar</strong></li>
+          <li>Una vez conectado, pulsa <strong>Actualizar</strong> en la barra superior</li>
+        </ol>
+
+        <div class="api-form">
+          <input type="password" id="api-key-input" placeholder="Pega tu Finnhub API key aquí..." autocomplete="off" spellcheck="false">
+          <button class="btn" onclick="connectApi()">Conectar</button>
+          <button class="btn btn-ghost" onclick="testApi()">Probar</button>
+          <button class="btn btn-danger" onclick="disconnectApi()" id="disconnect-btn" style="display:none;">Desconectar</button>
+        </div>
+        <div class="connect-status" id="connect-status" style="display:none;"></div>
+
+        <p style="color:var(--text-tertiary);font-size:11px;margin-top:14px;margin-bottom:0;">
+          🔒 Tu API key se guarda solo en tu navegador (<code>localStorage</code>) — nunca sale a ningún servidor.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>📡 Qué se actualiza con datos reales</h2>
+        <p>Cuando conectas Finnhub, estos campos se reemplazan con datos en vivo:</p>
+        <ul>
+          <li><strong>Precio actual</strong> y cambio % del día</li>
+          <li><strong>Market Cap</strong> en tiempo real</li>
+          <li><strong>Métricas fundamentales:</strong> P/E, P/B, ROE, deuda/patrimonio, current ratio, margen operativo, FCF</li>
+          <li><strong>Crecimiento:</strong> revenue y EPS growth 5 años</li>
+          <li><strong>Dividend yield</strong></li>
+          <li><strong>Máximo y mínimo 52 semanas</strong></li>
+        </ul>
+        <p style="font-size:13px;color:var(--text-tertiary);margin-top:14px;">Los campos <strong>RSI</strong>, <strong>SMA 50/200</strong>, <strong>short interest</strong>, <strong>float</strong>, <strong>actividad insider</strong> y <strong>catalizadores</strong> permanecen del snapshot (requieren endpoints adicionales o plan pagado). Si quieres también esos en vivo, dímelo y te integro <code>/indicator</code> de Finnhub.</p>
+
+        <h3>Sobre otras APIs</h3>
+        <div class="method-card">
+          <h4>Alpha Vantage <span class="badge">Gratis (limitado)</span></h4>
+          <p>25 requests/día gratis. Demasiado limitada para escanear 30 tickers continuamente. Útil si solo consultas pocas acciones al día.</p>
+        </div>
+        <div class="method-card">
+          <h4>Polygon.io <span class="badge paid">$29/mes</span></h4>
+          <p>Datos reales sin delay, websockets, calidad institucional. Vale la pena si vas a tradear activamente intradía.</p>
+        </div>
+        <div class="method-card">
+          <h4>Yahoo Finance (yfinance) <span class="badge">Gratis</span></h4>
+          <p>Sin key, pero requiere proxy server (CORS bloquea llamadas desde navegador). Solo útil si despliegas la app con backend.</p>
+        </div>
+
+        <h3>Sobre XTB</h3>
+        <p>XTB no tiene API pública de datos de mercado para retail — su API xStation es solo para órdenes. La forma práctica es mantener una lista local de tickers que XTB ofrece (la sacas de la plataforma) y marcarlos con <code>xtb: true</code>. Los marcados en el demo son los más comunes; verifica en tu cuenta antes de operar.</p>
+
+        <h3>Limpiar caché</h3>
+        <p>Si los datos en vivo se quedan viejos o quieres reset:</p>
+        <button class="btn btn-ghost" onclick="clearLiveCache()">🗑️ Limpiar caché de datos en vivo</button>
+      </div>
+    </div>
+
+    <!-- GLOSSARY -->
+    <div id="view-glossary" class="hidden">
+      <div class="panel">
+        <h2>📖 Glosario de términos</h2>
+
+        <h3>Valoración</h3>
+        <ul>
+          <li><strong>P/E (Price-to-Earnings):</strong> precio dividido entre ganancias por acción. Cuántos años de ganancias actuales pagas. < 15 económico, > 25 caro.</li>
+          <li><strong>P/B (Price-to-Book):</strong> precio sobre valor contable. < 1 cotiza por debajo de sus activos netos.</li>
+          <li><strong>PEG:</strong> P/E dividido por crecimiento esperado. Normaliza el P/E. < 1 atractivo.</li>
+          <li><strong>EV/EBITDA:</strong> valor de empresa sobre ganancia operativa antes de depreciación e impuestos. Comparable entre sectores. < 10 atractivo.</li>
+          <li><strong>P/FCF:</strong> precio sobre free cash flow. Mejor que P/E porque la caja es real.</li>
+        </ul>
+
+        <h3>Calidad</h3>
+        <ul>
+          <li><strong>ROE (Return on Equity):</strong> ganancia / patrimonio. > 15% empresa eficiente.</li>
+          <li><strong>ROIC:</strong> retorno sobre capital invertido. Mejor que ROE porque incluye deuda. > 12% buena señal.</li>
+          <li><strong>Margen operativo:</strong> ganancia operativa / ingresos. Indica poder de fijación de precios.</li>
+          <li><strong>Free Cash Flow (FCF):</strong> caja después de gastos de capital. Lo que la empresa realmente puede devolver a accionistas.</li>
+        </ul>
+
+        <h3>Salud financiera</h3>
+        <ul>
+          <li><strong>Deuda/Patrimonio:</strong> < 1 saludable, > 2 riesgoso (excepto bancos y utilities donde es normal).</li>
+          <li><strong>Current Ratio:</strong> activos corrientes / pasivos corrientes. > 1.5 = puede pagar deudas de corto plazo.</li>
+          <li><strong>Interest Coverage:</strong> EBIT / gastos por intereses. > 3 saludable.</li>
+        </ul>
+
+        <h3>Técnico / Momentum</h3>
+        <ul>
+          <li><strong>RSI (Relative Strength Index):</strong> oscilador 0-100. > 70 sobrecompra, < 30 sobreventa. Útil en rangos, menos en tendencias fuertes.</li>
+          <li><strong>MACD:</strong> diferencia de dos medias móviles exponenciales. Cruces indican cambio de momentum.</li>
+          <li><strong>SMA 50/200:</strong> medias móviles simples. Precio sobre SMA200 = tendencia alcista de largo plazo. "Golden cross" (SMA50 cruza arriba SMA200) es señal alcista clásica.</li>
+        </ul>
+
+        <h3>Específicos de penny stocks</h3>
+        <ul>
+          <li><strong>Float:</strong> número de acciones disponibles para tradear públicamente. Float bajo = más volatilidad.</li>
+          <li><strong>Short Interest:</strong> % del float vendido en corto. > 20% = posible squeeze.</li>
+          <li><strong>Días para cubrir (Days to Cover):</strong> short interest / volumen diario promedio. > 5 días = squeeze más explosivo posible.</li>
+          <li><strong>Cash Runway:</strong> meses de operación que la empresa puede pagar con su caja actual. < 12 meses = riesgo alto de dilución/quiebra.</li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===================== FETCH OVERLAY ===================== -->
+<div class="fetch-overlay" id="fetch-overlay">
+  <div class="fetch-card">
+    <h3>Actualizando datos en vivo</h3>
+    <div class="fetch-status" id="fetch-status">Iniciando...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-text">
+      <span id="progress-count">0 / 30</span>
+      <span id="progress-eta">—</span>
+    </div>
+    <div class="fetch-log" id="fetch-log"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   BURSASCAN — Lógica del escáner
+   ================================================================ */
+
+/* ===== DATA: muestra realista de acciones NYSE (snapshot 2026) =====
+   Las cifras son aproximaciones realistas con fines de demostración.
+   Para datos en vivo conecta una API (ver panel "Conectar datos en vivo").
+*/
+
+const STOCKS = [
+  // ===== VALUE: acciones sólidas con descuento =====
+  {
+    ticker:'F', name:'Ford Motor Company', sector:'Automotriz', exchange:'NYSE',
+    price:11.85, change:-0.42, marketCap:47.2,
+    pe:7.1, forwardPE:6.8, pb:1.05, peg:0.9,
+    roe:12.4, roic:4.1, opMargin:4.8,
+    debtEquity:3.4, currentRatio:1.18, fcfPositive:true, fcfB:6.8,
+    revenueGrowth5y:2.1, epsGrowth5y:18.5,
+    dividendYield:5.04,
+    rsi:42, sma50:12.40, sma200:11.20,
+    high52w:14.85, low52w:9.05,
+    shortInterest:6.2, floatM:3950,
+    insider:'neutral', analyst:3.0,
+    xtb:true,
+    catalyst:'Pivote EV y dividendo alto'
+  },
+  {
+    ticker:'T', name:'AT&T Inc.', sector:'Telecomunicaciones', exchange:'NYSE',
+    price:22.40, change:0.18, marketCap:160.5,
+    pe:10.2, forwardPE:9.3, pb:1.48, peg:1.2,
+    roe:13.1, roic:6.2, opMargin:20.1,
+    debtEquity:1.18, currentRatio:0.68, fcfPositive:true, fcfB:16.5,
+    revenueGrowth5y:0.5, epsGrowth5y:4.8,
+    dividendYield:4.95,
+    rsi:48, sma50:23.10, sma200:21.80,
+    high52w:24.80, low52w:18.20,
+    shortInterest:2.1, floatM:7180,
+    insider:'neutral', analyst:3.4,
+    xtb:true,
+    catalyst:'Reducción deuda + 5G monetization'
+  },
+  {
+    ticker:'BAC', name:'Bank of America Corp.', sector:'Financiero', exchange:'NYSE',
+    price:44.80, change:0.95, marketCap:340.2,
+    pe:13.4, forwardPE:11.8, pb:1.18, peg:1.3,
+    roe:9.8, roic:1.1, opMargin:31.2,
+    debtEquity:1.05, currentRatio:null, fcfPositive:true, fcfB:38.4,
+    revenueGrowth5y:3.2, epsGrowth5y:8.4,
+    dividendYield:2.34,
+    rsi:55, sma50:43.20, sma200:39.50,
+    high52w:48.20, low52w:32.40,
+    shortInterest:1.8, floatM:7600,
+    insider:'buy', analyst:3.8,
+    xtb:true,
+    catalyst:'Beneficiario de tasas altas'
+  },
+  {
+    ticker:'C', name:'Citigroup Inc.', sector:'Financiero', exchange:'NYSE',
+    price:68.90, change:-0.32, marketCap:128.5,
+    pe:12.8, forwardPE:9.2, pb:0.73, peg:1.0,
+    roe:6.1, roic:0.8, opMargin:22.4,
+    debtEquity:1.42, currentRatio:null, fcfPositive:true, fcfB:9.2,
+    revenueGrowth5y:0.8, epsGrowth5y:5.2,
+    dividendYield:3.18,
+    rsi:46, sma50:70.40, sma200:64.30,
+    high52w:78.20, low52w:48.10,
+    shortInterest:2.4, floatM:1880,
+    insider:'neutral', analyst:3.6,
+    xtb:true,
+    catalyst:'Reestructuración y buyback'
+  },
+  {
+    ticker:'WFC', name:'Wells Fargo & Co.', sector:'Financiero', exchange:'NYSE',
+    price:62.40, change:0.65, marketCap:210.5,
+    pe:13.1, forwardPE:11.4, pb:1.32, peg:1.4,
+    roe:10.8, roic:1.2, opMargin:28.3,
+    debtEquity:0.98, currentRatio:null, fcfPositive:true, fcfB:18.2,
+    revenueGrowth5y:1.2, epsGrowth5y:6.5,
+    dividendYield:2.42,
+    rsi:58, sma50:61.20, sma200:55.80,
+    high52w:66.30, low52w:48.40,
+    shortInterest:1.2, floatM:3400,
+    insider:'neutral', analyst:3.5,
+    xtb:true,
+    catalyst:'Salida límite activos Fed'
+  },
+  {
+    ticker:'KHC', name:'The Kraft Heinz Company', sector:'Consumo', exchange:'NYSE',
+    price:29.85, change:-0.18, marketCap:36.2,
+    pe:14.2, forwardPE:9.8, pb:0.88, peg:1.8,
+    roe:6.4, roic:5.1, opMargin:18.6,
+    debtEquity:0.42, currentRatio:0.95, fcfPositive:true, fcfB:3.1,
+    revenueGrowth5y:1.8, epsGrowth5y:-2.4,
+    dividendYield:5.36,
+    rsi:38, sma50:31.20, sma200:33.40,
+    high52w:38.10, low52w:28.40,
+    shortInterest:3.2, floatM:875,
+    insider:'buy', analyst:3.2,
+    xtb:true,
+    catalyst:'Valoración deprimida y dividendo'
+  },
+  {
+    ticker:'MO', name:'Altria Group Inc.', sector:'Consumo', exchange:'NYSE',
+    price:55.30, change:0.42, marketCap:93.4,
+    pe:9.4, forwardPE:8.8, pb:null, peg:1.5,
+    roe:-220, roic:38.4, opMargin:55.8,
+    debtEquity:-15.2, currentRatio:0.65, fcfPositive:true, fcfB:8.2,
+    revenueGrowth5y:0.5, epsGrowth5y:7.2,
+    dividendYield:7.42,
+    rsi:62, sma50:54.10, sma200:50.30,
+    high52w:58.40, low52w:42.10,
+    shortInterest:1.4, floatM:1690,
+    insider:'neutral', analyst:3.4,
+    xtb:true,
+    catalyst:'Dividend yield top + recompras'
+  },
+  {
+    ticker:'VZ', name:'Verizon Communications Inc.', sector:'Telecomunicaciones', exchange:'NYSE',
+    price:41.80, change:-0.22, marketCap:175.8,
+    pe:10.8, forwardPE:8.9, pb:1.82, peg:1.6,
+    roe:18.2, roic:6.4, opMargin:22.4,
+    debtEquity:1.62, currentRatio:0.78, fcfPositive:true, fcfB:18.7,
+    revenueGrowth5y:-0.5, epsGrowth5y:1.2,
+    dividendYield:6.45,
+    rsi:44, sma50:42.30, sma200:40.10,
+    high52w:46.20, low52w:36.80,
+    shortInterest:1.8, floatM:4200,
+    insider:'neutral', analyst:3.2,
+    xtb:true,
+    catalyst:'Reducción deuda C-band'
+  },
+  {
+    ticker:'GM', name:'General Motors Company', sector:'Automotriz', exchange:'NYSE',
+    price:49.20, change:1.15, marketCap:54.8,
+    pe:5.8, forwardPE:5.2, pb:0.92, peg:0.7,
+    roe:15.4, roic:6.8, opMargin:7.2,
+    debtEquity:1.85, currentRatio:1.08, fcfPositive:true, fcfB:11.4,
+    revenueGrowth5y:4.2, epsGrowth5y:14.2,
+    dividendYield:1.06,
+    rsi:54, sma50:48.30, sma200:43.80,
+    high52w:55.40, low52w:35.20,
+    shortInterest:4.2, floatM:945,
+    insider:'buy', analyst:3.8,
+    xtb:true,
+    catalyst:'Buybacks agresivos y EV roadmap'
+  },
+  {
+    ticker:'PFE', name:'Pfizer Inc.', sector:'Salud', exchange:'NYSE',
+    price:26.40, change:-0.85, marketCap:149.5,
+    pe:31.2, forwardPE:10.4, pb:1.65, peg:1.8,
+    roe:5.8, roic:3.4, opMargin:18.4,
+    debtEquity:0.71, currentRatio:1.32, fcfPositive:true, fcfB:8.8,
+    revenueGrowth5y:8.2, epsGrowth5y:-5.4,
+    dividendYield:6.52,
+    rsi:34, sma50:27.40, sma200:28.80,
+    high52w:32.10, low52w:24.30,
+    shortInterest:2.8, floatM:5650,
+    insider:'buy', analyst:3.4,
+    xtb:true,
+    catalyst:'Pipeline post-Covid y oncología'
+  },
+  {
+    ticker:'IBM', name:'IBM Corporation', sector:'Tecnología', exchange:'NYSE',
+    price:215.40, change:0.85, marketCap:198.4,
+    pe:24.8, forwardPE:20.2, pb:8.9, peg:2.4,
+    roe:28.4, roic:9.2, opMargin:14.8,
+    debtEquity:2.45, currentRatio:0.98, fcfPositive:true, fcfB:11.2,
+    revenueGrowth5y:2.4, epsGrowth5y:6.8,
+    dividendYield:3.12,
+    rsi:64, sma50:208.40, sma200:185.30,
+    high52w:228.50, low52w:158.40,
+    shortInterest:1.2, floatM:920,
+    insider:'sell', analyst:3.6,
+    xtb:true,
+    catalyst:'IA empresarial (watsonx)'
+  },
+  {
+    ticker:'CVS', name:'CVS Health Corporation', sector:'Salud', exchange:'NYSE',
+    price:58.40, change:-1.24, marketCap:73.2,
+    pe:11.4, forwardPE:9.2, pb:1.18, peg:1.4,
+    roe:8.4, roic:4.2, opMargin:3.8,
+    debtEquity:0.88, currentRatio:0.85, fcfPositive:true, fcfB:9.8,
+    revenueGrowth5y:5.2, epsGrowth5y:3.4,
+    dividendYield:4.55,
+    rsi:36, sma50:62.40, sma200:65.80,
+    high52w:78.20, low52w:54.10,
+    shortInterest:3.8, floatM:1280,
+    insider:'buy', analyst:3.4,
+    xtb:true,
+    catalyst:'Integración Aetna y costos bajando'
+  },
+  {
+    ticker:'KO', name:'The Coca-Cola Company', sector:'Consumo', exchange:'NYSE',
+    price:64.20, change:0.32, marketCap:276.5,
+    pe:24.8, forwardPE:22.4, pb:9.8, peg:3.2,
+    roe:42.4, roic:14.8, opMargin:28.6,
+    debtEquity:1.62, currentRatio:1.05, fcfPositive:true, fcfB:10.8,
+    revenueGrowth5y:5.2, epsGrowth5y:8.4,
+    dividendYield:2.96,
+    rsi:58, sma50:63.40, sma200:60.20,
+    high52w:67.20, low52w:55.10,
+    shortInterest:1.2, floatM:4310,
+    insider:'neutral', analyst:3.8,
+    xtb:true,
+    catalyst:'Pricing power y mercados emergentes'
+  },
+  {
+    ticker:'XOM', name:'Exxon Mobil Corporation', sector:'Energía', exchange:'NYSE',
+    price:108.40, change:0.65, marketCap:475.2,
+    pe:13.4, forwardPE:11.8, pb:1.95, peg:1.6,
+    roe:14.8, roic:11.2, opMargin:15.4,
+    debtEquity:0.18, currentRatio:1.32, fcfPositive:true, fcfB:36.8,
+    revenueGrowth5y:6.8, epsGrowth5y:10.2,
+    dividendYield:3.52,
+    rsi:55, sma50:107.20, sma200:108.40,
+    high52w:118.20, low52w:95.30,
+    shortInterest:1.4, floatM:4280,
+    insider:'neutral', analyst:3.8,
+    xtb:true,
+    catalyst:'Guyana production ramp'
+  },
+  {
+    ticker:'MMM', name:'3M Company', sector:'Industrial', exchange:'NYSE',
+    price:138.20, change:-0.45, marketCap:75.4,
+    pe:18.4, forwardPE:13.2, pb:8.4, peg:2.1,
+    roe:42.8, roic:12.4, opMargin:18.4,
+    debtEquity:2.85, currentRatio:1.42, fcfPositive:true, fcfB:5.8,
+    revenueGrowth5y:-1.2, epsGrowth5y:-2.4,
+    dividendYield:2.04,
+    rsi:54, sma50:140.20, sma200:128.50,
+    high52w:148.30, low52w:88.40,
+    shortInterest:2.8, floatM:548,
+    insider:'neutral', analyst:3.2,
+    xtb:true,
+    catalyst:'Resolución litigios y spinoff'
+  },
+
+  // ===== SOBREVALORADAS: señales de venta =====
+  {
+    ticker:'WMT', name:'Walmart Inc.', sector:'Consumo', exchange:'NYSE',
+    price:98.40, change:0.85, marketCap:790.5,
+    pe:38.4, forwardPE:32.8, pb:8.9, peg:3.8,
+    roe:24.8, roic:12.2, opMargin:4.4,
+    debtEquity:0.62, currentRatio:0.82, fcfPositive:true, fcfB:15.2,
+    revenueGrowth5y:5.4, epsGrowth5y:7.2,
+    dividendYield:0.95,
+    rsi:74, sma50:94.20, sma200:78.40,
+    high52w:102.50, low52w:62.80,
+    shortInterest:1.1, floatM:6280,
+    insider:'sell', analyst:4.2,
+    xtb:true,
+    catalyst:'Múltiplo expandido vs historia'
+  },
+  {
+    ticker:'WBA', name:'Walgreens Boots Alliance', sector:'Salud', exchange:'NASDAQ',
+    price:11.85, change:2.45, marketCap:10.2,
+    pe:null, forwardPE:4.2, pb:1.85, peg:null,
+    roe:-42.4, roic:-8.5, opMargin:-2.4,
+    debtEquity:4.85, currentRatio:0.68, fcfPositive:true, fcfB:0.85,
+    revenueGrowth5y:-2.4, epsGrowth5y:null,
+    dividendYield:6.42,
+    rsi:48, sma50:10.85, sma200:12.40,
+    high52w:18.95, low52w:8.65,
+    shortInterest:12.4, floatM:862,
+    insider:'buy', analyst:2.8,
+    xtb:true,
+    catalyst:'Reestructuración + cierre tiendas + dividendo alto'
+  },
+  {
+    ticker:'V', name:'Visa Inc.', sector:'Financiero', exchange:'NYSE',
+    price:298.50, change:0.42, marketCap:610.2,
+    pe:32.4, forwardPE:28.4, pb:14.8, peg:2.4,
+    roe:48.2, roic:28.4, opMargin:66.8,
+    debtEquity:0.55, currentRatio:1.42, fcfPositive:true, fcfB:18.2,
+    revenueGrowth5y:11.2, epsGrowth5y:14.4,
+    dividendYield:0.72,
+    rsi:68, sma50:292.40, sma200:268.30,
+    high52w:312.50, low52w:240.20,
+    shortInterest:0.8, floatM:1620,
+    insider:'sell', analyst:4.3,
+    xtb:true,
+    catalyst:'Múltiplo alto vs sector'
+  },
+  {
+    ticker:'MA', name:'Mastercard Inc.', sector:'Financiero', exchange:'NYSE',
+    price:518.40, change:1.25, marketCap:480.5,
+    pe:38.2, forwardPE:32.4, pb:62.4, peg:2.6,
+    roe:178.4, roic:38.2, opMargin:57.4,
+    debtEquity:2.62, currentRatio:1.21, fcfPositive:true, fcfB:11.8,
+    revenueGrowth5y:12.4, epsGrowth5y:15.8,
+    dividendYield:0.55,
+    rsi:71, sma50:508.20, sma200:462.40,
+    high52w:540.30, low52w:412.10,
+    shortInterest:1.0, floatM:935,
+    insider:'sell', analyst:4.3,
+    xtb:true,
+    catalyst:'Sobrecomprada técnicamente'
+  },
+  {
+    ticker:'SNOW', name:'Snowflake Inc.', sector:'Tecnología', exchange:'NYSE',
+    price:158.40, change:2.15, marketCap:53.2,
+    pe:null, forwardPE:62.4, pb:8.85, peg:null,
+    roe:-18.4, roic:-5.2, opMargin:-14.5,
+    debtEquity:0.08, currentRatio:2.85, fcfPositive:true, fcfB:0.885,
+    revenueGrowth5y:52.4, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:55, sma50:152.40, sma200:168.50,
+    high52w:195.40, low52w:107.13,
+    shortInterest:4.2, floatM:325,
+    insider:'neutral', analyst:3.8,
+    xtb:true,
+    catalyst:'Cortex AI + crecimiento consumo datos'
+  },
+  {
+    ticker:'CRM', name:'Salesforce Inc.', sector:'Tecnología', exchange:'NYSE',
+    price:325.40, change:1.42, marketCap:312.8,
+    pe:54.2, forwardPE:32.4, pb:5.8, peg:3.4,
+    roe:11.4, roic:7.8, opMargin:21.2,
+    debtEquity:0.18, currentRatio:1.05, fcfPositive:true, fcfB:9.8,
+    revenueGrowth5y:18.2, epsGrowth5y:18.4,
+    dividendYield:0.42,
+    rsi:69, sma50:318.40, sma200:285.20,
+    high52w:348.20, low52w:225.40,
+    shortInterest:1.8, floatM:965,
+    insider:'sell', analyst:4.0,
+    xtb:true,
+    catalyst:'Crecimiento desacelerando'
+  },
+  {
+    ticker:'NOW', name:'ServiceNow Inc.', sector:'Tecnología', exchange:'NYSE',
+    price:925.40, change:2.85, marketCap:188.5,
+    pe:128.4, forwardPE:62.4, pb:22.4, peg:3.8,
+    roe:18.4, roic:12.2, opMargin:13.2,
+    debtEquity:0.28, currentRatio:1.18, fcfPositive:true, fcfB:3.4,
+    revenueGrowth5y:28.4, epsGrowth5y:32.4,
+    dividendYield:0,
+    rsi:73, sma50:892.40, sma200:780.50,
+    high52w:985.40, low52w:625.30,
+    shortInterest:1.4, floatM:205,
+    insider:'sell', analyst:4.4,
+    xtb:true,
+    catalyst:'P/E muy alto, valuation stretched'
+  },
+  {
+    ticker:'HD', name:'The Home Depot Inc.', sector:'Consumo', exchange:'NYSE',
+    price:412.50, change:-0.85, marketCap:412.8,
+    pe:26.4, forwardPE:23.4, pb:null, peg:2.8,
+    roe:-1180, roic:42.4, opMargin:14.8,
+    debtEquity:-23.4, currentRatio:1.12, fcfPositive:true, fcfB:18.4,
+    revenueGrowth5y:4.8, epsGrowth5y:8.4,
+    dividendYield:2.18,
+    rsi:62, sma50:408.20, sma200:380.50,
+    high52w:438.20, low52w:325.10,
+    shortInterest:1.8, floatM:982,
+    insider:'sell', analyst:3.6,
+    xtb:true,
+    catalyst:'Múltiplo alto en ciclo flojo housing'
+  },
+
+  // ===== PENNY / ESPECULATIVAS (todas verificadas en XTB) =====
+  {
+    ticker:'WOLF', name:'Wolfspeed Inc.', sector:'Tecnología', exchange:'NYSE',
+    price:3.85, change:4.25, marketCap:0.485,
+    pe:null, forwardPE:null, pb:0.62, peg:null,
+    roe:-145.4, roic:-42.5, opMargin:-85.4,
+    debtEquity:4.85, currentRatio:2.18, fcfPositive:false, fcfB:-1.85,
+    revenueGrowth5y:14.5, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:52, sma50:3.42, sma200:5.85,
+    high52w:18.40, low52w:2.15,
+    shortInterest:22.4, floatM:125,
+    insider:'buy', analyst:3.0,
+    xtb:true,
+    catalyst:'SiC semiconductores + reestructuración deuda + EV demand'
+  },
+  {
+    ticker:'XPEV', name:'XPeng Inc.', sector:'Automotriz', exchange:'NYSE',
+    price:18.40, change:2.85, marketCap:16.8,
+    pe:null, forwardPE:null, pb:2.18, peg:null,
+    roe:-28.4, roic:-14.5, opMargin:-18.4,
+    debtEquity:0.42, currentRatio:2.85, fcfPositive:false, fcfB:-1.05,
+    revenueGrowth5y:42.4, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:58, sma50:17.40, sma200:14.85,
+    high52w:24.85, low52w:9.40,
+    shortInterest:8.4, floatM:985,
+    insider:'neutral', analyst:3.4,
+    xtb:true,
+    catalyst:'MONA + AI driving + alianza VW'
+  },
+  {
+    ticker:'PSFE', name:'Paysafe Limited', sector:'Financiero', exchange:'NYSE',
+    price:16.40, change:1.45, marketCap:1.25,
+    pe:null, forwardPE:8.5, pb:0.85, peg:null,
+    roe:-8.4, roic:4.2, opMargin:12.4,
+    debtEquity:3.42, currentRatio:0.92, fcfPositive:true, fcfB:0.145,
+    revenueGrowth5y:4.2, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:48, sma50:17.40, sma200:19.85,
+    high52w:26.40, low52w:13.85,
+    shortInterest:6.4, floatM:72,
+    insider:'buy', analyst:3.2,
+    xtb:true,
+    catalyst:'iGaming payments + reducción deuda'
+  },
+  {
+    ticker:'CIFR', name:'Cipher Mining Inc.', sector:'Tecnología', exchange:'NASDAQ',
+    price:4.85, change:5.42, marketCap:0.685,
+    pe:null, forwardPE:null, pb:1.85, peg:null,
+    roe:-18.4, roic:-8.5, opMargin:-24.5,
+    debtEquity:0.12, currentRatio:5.85, fcfPositive:false, fcfB:-0.085,
+    revenueGrowth5y:null, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:62, sma50:4.42, sma200:3.85,
+    high52w:8.40, low52w:2.40,
+    shortInterest:14.2, floatM:142,
+    insider:'buy', analyst:3.4,
+    xtb:true,
+    catalyst:'BTC mining + expansión HPC/IA data center'
+  },
+  {
+    ticker:'CELH', name:'Celsius Holdings Inc.', sector:'Consumo', exchange:'NASDAQ',
+    price:28.40, change:2.15, marketCap:7.2,
+    pe:32.4, forwardPE:22.4, pb:5.85, peg:1.8,
+    roe:18.4, roic:12.5, opMargin:14.2,
+    debtEquity:0.0, currentRatio:3.85, fcfPositive:true, fcfB:0.285,
+    revenueGrowth5y:62.4, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:52, sma50:27.40, sma200:32.40,
+    high52w:52.40, low52w:18.85,
+    shortInterest:8.4, floatM:235,
+    insider:'neutral', analyst:3.8,
+    xtb:true,
+    catalyst:'Distribución Pepsi + ganancia cuota energy drinks'
+  },
+  {
+    ticker:'MSTR', name:'MicroStrategy Inc.', sector:'Tecnología', exchange:'NASDAQ',
+    price:285.40, change:4.85, marketCap:42.5,
+    pe:null, forwardPE:null, pb:4.85, peg:null,
+    roe:-12.4, roic:-4.2, opMargin:-18.5,
+    debtEquity:1.85, currentRatio:0.85, fcfPositive:false, fcfB:-0.085,
+    revenueGrowth5y:-8.4, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:65, sma50:268.40, sma200:248.50,
+    high52w:543.00, low52w:124.20,
+    shortInterest:18.4, floatM:148,
+    insider:'buy', analyst:3.0,
+    xtb:true,
+    catalyst:'Bitcoin treasury play + convertibles agresivos'
+  },
+  {
+    ticker:'NIO', name:'NIO Inc.', sector:'Automotriz', exchange:'NYSE',
+    price:4.85, change:3.25, marketCap:9.85,
+    pe:null, forwardPE:null, pb:-2.4, peg:null,
+    roe:-65.4, roic:-35.2, opMargin:-32.4,
+    debtEquity:-4.2, currentRatio:0.92, fcfPositive:false, fcfB:-2.85,
+    revenueGrowth5y:38.4, epsGrowth5y:null,
+    dividendYield:0,
+    rsi:62, sma50:4.62, sma200:5.18,
+    high52w:7.85, low52w:3.45,
+    shortInterest:14.8, floatM:1640,
+    insider:'neutral', analyst:3.4,
+    xtb:true,
+    catalyst:'Lanzamiento Onvo (sub-marca) y reducción pérdidas'
+  },
+
+
+  // ===== MEGA CAPS NASDAQ - TECH (todas en XTB) =====
+  {ticker:'AAPL', name:'Apple Inc.', sector:'Tecnología', exchange:'NASDAQ', price:202.40, change:0.62, marketCap:3080, pe:32.4, forwardPE:28.5, pb:55.2, peg:2.6, roe:158.2, roic:38.4, opMargin:30.8, debtEquity:1.62, currentRatio:0.92, fcfPositive:true, fcfB:99.5, revenueGrowth5y:8.4, epsGrowth5y:12.5, dividendYield:0.48, rsi:62, sma50:198.40, sma200:185.20, high52w:215.30, low52w:165.50, shortInterest:0.6, floatM:15280, insider:'neutral', analyst:4.2, xtb:true, catalyst:'AI features y ecosistema iOS'},
+  {ticker:'MSFT', name:'Microsoft Corporation', sector:'Tecnología', exchange:'NASDAQ', price:445.20, change:0.85, marketCap:3310, pe:38.2, forwardPE:32.4, pb:14.2, peg:2.2, roe:42.8, roic:24.2, opMargin:44.5, debtEquity:0.42, currentRatio:1.28, fcfPositive:true, fcfB:74.2, revenueGrowth5y:14.8, epsGrowth5y:18.2, dividendYield:0.72, rsi:68, sma50:438.40, sma200:412.50, high52w:468.20, low52w:380.40, shortInterest:0.5, floatM:7430, insider:'sell', analyst:4.5, xtb:true, catalyst:'Azure AI y Copilot enterprise'},
+  {ticker:'GOOGL', name:'Alphabet Inc.', sector:'Tecnología', exchange:'NASDAQ', price:188.40, change:0.42, marketCap:2320, pe:26.4, forwardPE:22.5, pb:7.8, peg:1.8, roe:31.2, roic:24.5, opMargin:30.2, debtEquity:0.08, currentRatio:1.95, fcfPositive:true, fcfB:72.8, revenueGrowth5y:18.4, epsGrowth5y:24.5, dividendYield:0.42, rsi:58, sma50:185.40, sma200:172.50, high52w:198.40, low52w:148.50, shortInterest:1.2, floatM:5680, insider:'sell', analyst:4.4, xtb:true, catalyst:'Gemini IA y cloud growth'},
+  {ticker:'AMZN', name:'Amazon.com Inc.', sector:'Consumo', exchange:'NASDAQ', price:212.50, change:1.15, marketCap:2240, pe:48.2, forwardPE:32.8, pb:8.5, peg:2.4, roe:18.2, roic:12.4, opMargin:11.2, debtEquity:0.62, currentRatio:1.05, fcfPositive:true, fcfB:42.8, revenueGrowth5y:18.5, epsGrowth5y:32.4, dividendYield:0, rsi:64, sma50:208.40, sma200:188.50, high52w:225.40, low52w:165.20, shortInterest:0.9, floatM:9850, insider:'neutral', analyst:4.5, xtb:true, catalyst:'AWS margin expansion + retail recovery'},
+  {ticker:'META', name:'Meta Platforms Inc.', sector:'Tecnología', exchange:'NASDAQ', price:545.40, change:1.85, marketCap:1380, pe:28.4, forwardPE:24.2, pb:9.2, peg:1.6, roe:34.2, roic:24.5, opMargin:41.5, debtEquity:0.32, currentRatio:2.45, fcfPositive:true, fcfB:54.2, revenueGrowth5y:18.4, epsGrowth5y:28.4, dividendYield:0.42, rsi:65, sma50:528.40, sma200:485.20, high52w:582.40, low52w:412.50, shortInterest:1.0, floatM:2240, insider:'sell', analyst:4.4, xtb:true, catalyst:'AI infra + Reels monetización'},
+  {ticker:'TSLA', name:'Tesla Inc.', sector:'Automotriz', exchange:'NASDAQ', price:285.40, change:2.45, marketCap:910, pe:78.4, forwardPE:62.5, pb:14.5, peg:4.2, roe:18.4, roic:12.5, opMargin:8.4, debtEquity:0.18, currentRatio:1.85, fcfPositive:true, fcfB:5.8, revenueGrowth5y:42.4, epsGrowth5y:28.5, dividendYield:0, rsi:72, sma50:268.40, sma200:228.50, high52w:325.40, low52w:165.40, shortInterest:3.2, floatM:2680, insider:'sell', analyst:3.4, xtb:true, catalyst:'FSD v13 + Cybertruck rampup'},
+  {ticker:'NVDA', name:'NVIDIA Corporation', sector:'Tecnología', exchange:'NASDAQ', price:128.40, change:1.42, marketCap:3150, pe:54.2, forwardPE:32.4, pb:48.5, peg:1.4, roe:118.5, roic:78.4, opMargin:62.4, debtEquity:0.18, currentRatio:4.18, fcfPositive:true, fcfB:42.5, revenueGrowth5y:62.4, epsGrowth5y:85.4, dividendYield:0.05, rsi:68, sma50:124.50, sma200:108.40, high52w:140.80, low52w:75.40, shortInterest:1.2, floatM:24380, insider:'sell', analyst:4.7, xtb:true, catalyst:'Blackwell GPU + IA data centers'},
+  {ticker:'AMD', name:'Advanced Micro Devices', sector:'Tecnología', exchange:'NASDAQ', price:158.40, change:1.65, marketCap:256, pe:118.5, forwardPE:32.4, pb:4.2, peg:1.8, roe:6.4, roic:5.2, opMargin:8.4, debtEquity:0.05, currentRatio:2.45, fcfPositive:true, fcfB:2.4, revenueGrowth5y:28.4, epsGrowth5y:38.4, dividendYield:0, rsi:60, sma50:152.40, sma200:148.50, high52w:188.50, low52w:118.40, shortInterest:2.4, floatM:1620, insider:'sell', analyst:4.0, xtb:true, catalyst:'MI300 IA accel + share gains'},
+  {ticker:'NFLX', name:'Netflix Inc.', sector:'Consumo', exchange:'NASDAQ', price:825.40, change:0.95, marketCap:355, pe:42.4, forwardPE:32.5, pb:14.8, peg:2.0, roe:32.8, roic:18.4, opMargin:24.5, debtEquity:0.85, currentRatio:1.18, fcfPositive:true, fcfB:7.8, revenueGrowth5y:18.4, epsGrowth5y:32.4, dividendYield:0, rsi:65, sma50:805.40, sma200:728.40, high52w:885.40, low52w:545.20, shortInterest:1.8, floatM:428, insider:'sell', analyst:4.0, xtb:true, catalyst:'Ad tier + password sharing pricing'},
+  {ticker:'ADBE', name:'Adobe Inc.', sector:'Tecnología', exchange:'NASDAQ', price:498.40, change:-0.45, marketCap:218, pe:38.4, forwardPE:24.5, pb:12.2, peg:2.4, roe:32.4, roic:24.5, opMargin:32.4, debtEquity:0.42, currentRatio:1.18, fcfPositive:true, fcfB:7.8, revenueGrowth5y:14.2, epsGrowth5y:15.2, dividendYield:0, rsi:48, sma50:512.40, sma200:528.50, high52w:638.20, low52w:432.40, shortInterest:2.1, floatM:438, insider:'neutral', analyst:3.8, xtb:true, catalyst:'Firefly IA + Creative Cloud growth'},
+  {ticker:'MRVL', name:'Marvell Technology Inc.', sector:'Tecnología', exchange:'NASDAQ', price:68.40, change:1.85, marketCap:59.2, pe:null, forwardPE:24.5, pb:3.85, peg:null, roe:-2.4, roic:4.5, opMargin:4.2, debtEquity:0.45, currentRatio:1.85, fcfPositive:true, fcfB:0.985, revenueGrowth5y:14.5, epsGrowth5y:null, dividendYield:0.24, rsi:58, sma50:64.40, sma200:72.50, high52w:119.40, low52w:52.40, shortInterest:2.4, floatM:862, insider:'buy', analyst:4.2, xtb:true, catalyst:'AI custom silicon (ASIC) + data center'},
+  {ticker:'CSCO', name:'Cisco Systems Inc.', sector:'Tecnología', exchange:'NASDAQ', price:58.40, change:0.32, marketCap:235, pe:18.4, forwardPE:14.2, pb:5.2, peg:2.4, roe:28.4, roic:14.2, opMargin:24.5, debtEquity:0.65, currentRatio:1.18, fcfPositive:true, fcfB:14.5, revenueGrowth5y:2.4, epsGrowth5y:8.4, dividendYield:2.84, rsi:58, sma50:56.40, sma200:52.40, high52w:62.40, low52w:44.50, shortInterest:1.2, floatM:4020, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Splunk integration + AI networking'},
+  {ticker:'QCOM', name:'Qualcomm Inc.', sector:'Tecnología', exchange:'NASDAQ', price:175.40, change:1.05, marketCap:195, pe:18.4, forwardPE:14.5, pb:8.4, peg:1.4, roe:42.8, roic:24.5, opMargin:28.5, debtEquity:0.62, currentRatio:2.05, fcfPositive:true, fcfB:11.5, revenueGrowth5y:8.5, epsGrowth5y:14.2, dividendYield:1.85, rsi:62, sma50:168.40, sma200:158.50, high52w:198.50, low52w:138.40, shortInterest:1.5, floatM:1108, insider:'neutral', analyst:3.8, xtb:true, catalyst:'AI on-device + autos'},
+  {ticker:'INTC', name:'Intel Corporation', sector:'Tecnología', exchange:'NASDAQ', price:24.50, change:-0.85, marketCap:104, pe:null, forwardPE:18.4, pb:0.92, peg:null, roe:-12.4, roic:-2.5, opMargin:-4.2, debtEquity:0.45, currentRatio:1.32, fcfPositive:false, fcfB:-12.5, revenueGrowth5y:-2.4, epsGrowth5y:null, dividendYield:0, rsi:38, sma50:26.40, sma200:32.40, high52w:48.20, low52w:18.50, shortInterest:3.8, floatM:4280, insider:'buy', analyst:2.8, xtb:true, catalyst:'18A fab restructure + foundry CHIPS act'},
+
+  // ===== FINANCIERO (todas en XTB) =====
+  {ticker:'JPM', name:'JPMorgan Chase & Co.', sector:'Financiero', exchange:'NYSE', price:248.40, change:0.62, marketCap:705, pe:13.8, forwardPE:14.2, pb:2.18, peg:1.6, roe:16.4, roic:1.4, opMargin:42.5, debtEquity:1.18, currentRatio:null, fcfPositive:true, fcfB:42.5, revenueGrowth5y:8.4, epsGrowth5y:11.2, dividendYield:1.95, rsi:62, sma50:242.40, sma200:218.50, high52w:265.40, low52w:182.50, shortInterest:0.8, floatM:2820, insider:'sell', analyst:3.6, xtb:true, catalyst:'NII alta + buybacks consistentes'},
+  {ticker:'GS', name:'Goldman Sachs Group', sector:'Financiero', exchange:'NYSE', price:548.40, change:0.85, marketCap:175, pe:14.5, forwardPE:13.2, pb:1.65, peg:1.4, roe:11.8, roic:1.2, opMargin:32.4, debtEquity:3.85, currentRatio:null, fcfPositive:true, fcfB:14.2, revenueGrowth5y:5.4, epsGrowth5y:7.8, dividendYield:2.05, rsi:64, sma50:528.40, sma200:478.50, high52w:582.40, low52w:382.40, shortInterest:1.2, floatM:325, insider:'neutral', analyst:3.8, xtb:true, catalyst:'IB rebound + capital markets'},
+  {ticker:'MS', name:'Morgan Stanley', sector:'Financiero', exchange:'NYSE', price:128.40, change:0.42, marketCap:215, pe:18.4, forwardPE:15.2, pb:2.18, peg:1.8, roe:13.2, roic:1.5, opMargin:28.4, debtEquity:2.95, currentRatio:null, fcfPositive:true, fcfB:11.8, revenueGrowth5y:5.8, epsGrowth5y:7.2, dividendYield:2.85, rsi:58, sma50:126.40, sma200:112.50, high52w:135.40, low52w:88.50, shortInterest:1.4, floatM:1620, insider:'neutral', analyst:3.6, xtb:true, catalyst:'WM fees + IB pipeline'},
+  {ticker:'AXP', name:'American Express Co.', sector:'Financiero', exchange:'NYSE', price:298.40, change:0.55, marketCap:212, pe:21.4, forwardPE:18.2, pb:6.8, peg:1.8, roe:34.2, roic:8.4, opMargin:28.4, debtEquity:1.85, currentRatio:1.62, fcfPositive:true, fcfB:14.5, revenueGrowth5y:12.4, epsGrowth5y:15.2, dividendYield:1.05, rsi:65, sma50:288.40, sma200:248.50, high52w:325.40, low52w:185.40, shortInterest:1.0, floatM:712, insider:'sell', analyst:4.0, xtb:true, catalyst:'Spend resilience + premium cards'},
+  {ticker:'BLK', name:'BlackRock Inc.', sector:'Financiero', exchange:'NYSE', price:998.40, change:0.62, marketCap:148, pe:24.5, forwardPE:22.4, pb:3.42, peg:2.4, roe:14.2, roic:11.8, opMargin:38.4, debtEquity:0.65, currentRatio:5.85, fcfPositive:true, fcfB:5.4, revenueGrowth5y:8.4, epsGrowth5y:11.2, dividendYield:2.05, rsi:60, sma50:982.40, sma200:885.40, high52w:1058.40, low52w:712.40, shortInterest:1.2, floatM:148, insider:'neutral', analyst:3.8, xtb:true, catalyst:'IBIT BTC ETF + AUM growth'},
+
+  // ===== SALUD (todas en XTB) =====
+  {ticker:'JNJ', name:'Johnson & Johnson', sector:'Salud', exchange:'NYSE', price:158.40, change:-0.25, marketCap:382, pe:24.5, forwardPE:15.2, pb:5.8, peg:2.4, roe:24.5, roic:14.2, opMargin:24.5, debtEquity:0.42, currentRatio:1.18, fcfPositive:true, fcfB:18.5, revenueGrowth5y:4.2, epsGrowth5y:6.4, dividendYield:3.18, rsi:48, sma50:160.40, sma200:158.50, high52w:172.40, low52w:142.50, shortInterest:0.8, floatM:2410, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Innovative medicine + MedTech'},
+  {ticker:'UNH', name:'UnitedHealth Group', sector:'Salud', exchange:'NYSE', price:512.40, change:0.85, marketCap:475, pe:18.4, forwardPE:16.4, pb:5.2, peg:1.4, roe:24.5, roic:14.2, opMargin:8.4, debtEquity:0.72, currentRatio:0.85, fcfPositive:true, fcfB:25.4, revenueGrowth5y:11.2, epsGrowth5y:14.5, dividendYield:1.65, rsi:55, sma50:498.40, sma200:512.50, high52w:625.40, low52w:425.40, shortInterest:1.2, floatM:925, insider:'buy', analyst:4.2, xtb:true, catalyst:'Optum growth + utilization normalizing'},
+  {ticker:'ABBV', name:'AbbVie Inc.', sector:'Salud', exchange:'NYSE', price:198.40, change:0.42, marketCap:352, pe:62.4, forwardPE:14.5, pb:null, peg:1.8, roe:42.5, roic:18.5, opMargin:28.4, debtEquity:-12.5, currentRatio:0.78, fcfPositive:true, fcfB:18.4, revenueGrowth5y:5.4, epsGrowth5y:-4.2, dividendYield:3.42, rsi:62, sma50:188.40, sma200:178.50, high52w:215.40, low52w:152.40, shortInterest:0.9, floatM:1768, insider:'neutral', analyst:3.8, xtb:true, catalyst:'Post-Humira pipeline + Rinvoq/Skyrizi'},
+  {ticker:'MRK', name:'Merck & Co. Inc.', sector:'Salud', exchange:'NYSE', price:98.40, change:-0.45, marketCap:248, pe:21.5, forwardPE:11.2, pb:5.8, peg:1.4, roe:28.4, roic:14.2, opMargin:32.4, debtEquity:0.78, currentRatio:1.32, fcfPositive:true, fcfB:14.5, revenueGrowth5y:8.4, epsGrowth5y:11.5, dividendYield:3.28, rsi:42, sma50:102.40, sma200:118.50, high52w:135.40, low52w:88.50, shortInterest:1.2, floatM:2528, insider:'buy', analyst:4.2, xtb:true, catalyst:'Keytruda peak + pipeline diversification'},
+  {ticker:'ABT', name:'Abbott Laboratories', sector:'Salud', exchange:'NYSE', price:128.40, change:0.32, marketCap:222, pe:32.4, forwardPE:22.4, pb:5.2, peg:2.4, roe:18.4, roic:11.5, opMargin:18.5, debtEquity:0.42, currentRatio:1.65, fcfPositive:true, fcfB:6.8, revenueGrowth5y:4.5, epsGrowth5y:5.8, dividendYield:1.85, rsi:55, sma50:125.40, sma200:115.40, high52w:135.40, low52w:98.50, shortInterest:1.4, floatM:1735, insider:'neutral', analyst:3.8, xtb:true, catalyst:'Libre CGM + diagnostics recovery'},
+  {ticker:'AMGN', name:'Amgen Inc.', sector:'Salud', exchange:'NASDAQ', price:298.40, change:0.55, marketCap:158, pe:24.5, forwardPE:14.5, pb:34.5, peg:1.8, roe:158.2, roic:14.2, opMargin:32.4, debtEquity:18.5, currentRatio:1.85, fcfPositive:true, fcfB:9.8, revenueGrowth5y:6.4, epsGrowth5y:7.8, dividendYield:3.18, rsi:55, sma50:288.40, sma200:295.40, high52w:338.40, low52w:248.50, shortInterest:2.4, floatM:530, insider:'neutral', analyst:3.6, xtb:true, catalyst:'MariTide GLP-1 phase 3'},
+
+  // ===== CONSUMO (todas en XTB) =====
+  {ticker:'PG', name:'Procter & Gamble', sector:'Consumo', exchange:'NYSE', price:168.40, change:0.22, marketCap:395, pe:28.4, forwardPE:24.5, pb:8.4, peg:3.2, roe:31.5, roic:14.2, opMargin:24.5, debtEquity:0.65, currentRatio:0.85, fcfPositive:true, fcfB:16.5, revenueGrowth5y:5.4, epsGrowth5y:7.2, dividendYield:2.45, rsi:58, sma50:165.40, sma200:160.50, high52w:175.40, low52w:148.50, shortInterest:0.8, floatM:2342, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Pricing power + EM margins'},
+  {ticker:'MCD', name:'McDonald\'s Corp.', sector:'Consumo', exchange:'NYSE', price:298.40, change:0.42, marketCap:215, pe:24.5, forwardPE:22.4, pb:null, peg:2.8, roe:-185.4, roic:18.4, opMargin:45.5, debtEquity:-22.4, currentRatio:1.18, fcfPositive:true, fcfB:7.4, revenueGrowth5y:5.4, epsGrowth5y:8.4, dividendYield:2.32, rsi:55, sma50:295.40, sma200:288.50, high52w:315.40, low52w:248.50, shortInterest:1.2, floatM:720, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Digital + value menu turnaround'},
+  {ticker:'SBUX', name:'Starbucks Corp.', sector:'Consumo', exchange:'NASDAQ', price:98.40, change:1.15, marketCap:112, pe:25.4, forwardPE:22.5, pb:null, peg:2.4, roe:-285.4, roic:18.5, opMargin:14.5, debtEquity:-12.4, currentRatio:0.78, fcfPositive:true, fcfB:3.8, revenueGrowth5y:8.4, epsGrowth5y:11.2, dividendYield:2.42, rsi:58, sma50:95.40, sma200:88.50, high52w:115.40, low52w:72.40, shortInterest:2.1, floatM:1135, insider:'buy', analyst:3.4, xtb:true, catalyst:'New CEO Niccol turnaround plan'},
+  {ticker:'NKE', name:'Nike Inc.', sector:'Consumo', exchange:'NYSE', price:75.40, change:-0.85, marketCap:115, pe:24.5, forwardPE:32.4, pb:8.4, peg:5.8, roe:32.4, roic:14.2, opMargin:11.2, debtEquity:0.62, currentRatio:2.18, fcfPositive:true, fcfB:5.4, revenueGrowth5y:5.4, epsGrowth5y:-12.4, dividendYield:2.05, rsi:38, sma50:78.40, sma200:88.50, high52w:115.40, low52w:68.50, shortInterest:2.4, floatM:1192, insider:'buy', analyst:3.2, xtb:true, catalyst:'Inventory clean + new product cycle'},
+  {ticker:'PEP', name:'PepsiCo Inc.', sector:'Consumo', exchange:'NASDAQ', price:158.40, change:0.18, marketCap:218, pe:22.4, forwardPE:18.5, pb:11.4, peg:2.8, roe:54.5, roic:14.2, opMargin:14.5, debtEquity:2.18, currentRatio:0.82, fcfPositive:true, fcfB:8.4, revenueGrowth5y:5.4, epsGrowth5y:7.8, dividendYield:3.45, rsi:48, sma50:160.40, sma200:165.40, high52w:182.40, low52w:148.50, shortInterest:0.9, floatM:1370, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Frito-Lay margins + Gatorade'},
+  {ticker:'DIS', name:'Walt Disney Co.', sector:'Consumo', exchange:'NYSE', price:108.40, change:0.62, marketCap:198, pe:42.4, forwardPE:18.5, pb:1.85, peg:1.4, roe:4.5, roic:3.8, opMargin:11.2, debtEquity:0.55, currentRatio:0.78, fcfPositive:true, fcfB:8.4, revenueGrowth5y:4.2, epsGrowth5y:-8.4, dividendYield:0.85, rsi:52, sma50:105.40, sma200:98.50, high52w:125.40, low52w:82.40, shortInterest:1.8, floatM:1828, insider:'neutral', analyst:3.8, xtb:true, catalyst:'DTC profitability + parks pricing'},
+
+  // ===== INDUSTRIAL (todas en XTB) =====
+  {ticker:'DE', name:'Deere & Company', sector:'Industrial', exchange:'NYSE', price:388.40, change:0.62, marketCap:112, pe:13.5, forwardPE:15.2, pb:5.85, peg:1.4, roe:42.4, roic:18.5, opMargin:18.4, debtEquity:2.85, currentRatio:1.95, fcfPositive:true, fcfB:4.2, revenueGrowth5y:8.4, epsGrowth5y:14.5, dividendYield:1.55, rsi:58, sma50:378.40, sma200:405.20, high52w:478.40, low52w:335.40, shortInterest:1.8, floatM:278, insider:'neutral', analyst:3.8, xtb:true, catalyst:'AgTech precision + ciclo agrícola recovery'},
+  {ticker:'BA', name:'Boeing Co.', sector:'Industrial', exchange:'NYSE', price:158.40, change:-1.25, marketCap:118, pe:null, forwardPE:24.5, pb:null, peg:null, roe:-185.4, roic:-12.5, opMargin:-8.4, debtEquity:-15.4, currentRatio:1.15, fcfPositive:false, fcfB:-12.5, revenueGrowth5y:-2.4, epsGrowth5y:null, dividendYield:0, rsi:42, sma50:165.40, sma200:175.40, high52w:225.40, low52w:128.50, shortInterest:2.8, floatM:743, insider:'buy', analyst:3.4, xtb:true, catalyst:'737 MAX delivery rampup + defense'},
+  {ticker:'GE', name:'GE Aerospace', sector:'Industrial', exchange:'NYSE', price:188.40, change:1.85, marketCap:198, pe:32.4, forwardPE:28.5, pb:8.4, peg:1.8, roe:24.5, roic:14.5, opMargin:18.5, debtEquity:0.85, currentRatio:1.42, fcfPositive:true, fcfB:5.8, revenueGrowth5y:5.4, epsGrowth5y:25.4, dividendYield:0.62, rsi:68, sma50:182.40, sma200:165.40, high52w:198.40, low52w:138.50, shortInterest:1.5, floatM:1085, insider:'sell', analyst:4.0, xtb:true, catalyst:'LEAP engine margin expansion'},
+  {ticker:'RTX', name:'RTX Corporation', sector:'Industrial', exchange:'NYSE', price:128.40, change:0.42, marketCap:172, pe:38.4, forwardPE:20.5, pb:2.18, peg:2.4, roe:5.8, roic:4.5, opMargin:10.4, debtEquity:0.62, currentRatio:1.05, fcfPositive:true, fcfB:5.8, revenueGrowth5y:8.4, epsGrowth5y:7.5, dividendYield:1.95, rsi:62, sma50:122.40, sma200:115.40, high52w:135.40, low52w:88.50, shortInterest:1.2, floatM:1335, insider:'neutral', analyst:3.6, xtb:true, catalyst:'GTF engine fixes + defense'},
+  {ticker:'HON', name:'Honeywell International', sector:'Industrial', exchange:'NYSE', price:218.40, change:0.32, marketCap:142, pe:24.5, forwardPE:21.4, pb:8.4, peg:2.4, roe:35.4, roic:14.2, opMargin:21.4, debtEquity:1.42, currentRatio:1.35, fcfPositive:true, fcfB:5.8, revenueGrowth5y:2.4, epsGrowth5y:5.8, dividendYield:2.05, rsi:55, sma50:215.40, sma200:208.50, high52w:235.40, low52w:175.40, shortInterest:1.0, floatM:651, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Aerospace cycle + automation'},
+
+  // ===== ENERGÍA (todas en XTB) =====
+  {ticker:'CVX', name:'Chevron Corp.', sector:'Energía', exchange:'NYSE', price:158.40, change:0.45, marketCap:288, pe:14.5, forwardPE:13.2, pb:1.82, peg:1.6, roe:14.5, roic:11.2, opMargin:12.4, debtEquity:0.18, currentRatio:1.18, fcfPositive:true, fcfB:18.5, revenueGrowth5y:5.4, epsGrowth5y:8.4, dividendYield:4.25, rsi:55, sma50:155.40, sma200:152.50, high52w:172.40, low52w:135.40, shortInterest:1.2, floatM:1820, insider:'neutral', analyst:3.8, xtb:true, catalyst:'Permian + Hess deal'},
+  {ticker:'COP', name:'ConocoPhillips', sector:'Energía', exchange:'NYSE', price:112.40, change:0.85, marketCap:138, pe:11.5, forwardPE:10.4, pb:2.58, peg:1.2, roe:22.4, roic:14.5, opMargin:18.5, debtEquity:0.38, currentRatio:1.62, fcfPositive:true, fcfB:11.2, revenueGrowth5y:11.5, epsGrowth5y:18.4, dividendYield:2.92, rsi:58, sma50:108.40, sma200:112.50, high52w:135.40, low52w:88.50, shortInterest:1.4, floatM:1162, insider:'neutral', analyst:4.0, xtb:true, catalyst:'Marathon acquisition + LNG'},
+  {ticker:'SLB', name:'Schlumberger Ltd.', sector:'Energía', exchange:'NYSE', price:48.40, change:0.62, marketCap:68, pe:14.5, forwardPE:11.5, pb:3.18, peg:1.0, roe:22.4, roic:11.5, opMargin:18.5, debtEquity:0.65, currentRatio:1.42, fcfPositive:true, fcfB:4.2, revenueGrowth5y:11.5, epsGrowth5y:32.4, dividendYield:2.32, rsi:48, sma50:50.40, sma200:48.50, high52w:62.40, low52w:38.50, shortInterest:1.8, floatM:1413, insider:'buy', analyst:4.2, xtb:true, catalyst:'Offshore drilling cycle peak'},
+
+  // ===== ADRs (mayoría en XTB) =====
+  {ticker:'TSM', name:'Taiwan Semiconductor', sector:'Tecnología', exchange:'NYSE', price:198.40, change:1.45, marketCap:1028, pe:28.4, forwardPE:22.5, pb:7.8, peg:1.4, roe:28.4, roic:22.5, opMargin:42.5, debtEquity:0.32, currentRatio:2.18, fcfPositive:true, fcfB:28.4, revenueGrowth5y:18.5, epsGrowth5y:22.4, dividendYield:1.42, rsi:65, sma50:188.40, sma200:165.40, high52w:215.40, low52w:115.40, shortInterest:0.8, floatM:5185, insider:'neutral', analyst:4.6, xtb:true, catalyst:'2nm volume + AI chip demand'},
+  {ticker:'BABA', name:'Alibaba Group', sector:'Consumo', exchange:'NYSE', price:108.40, change:1.85, marketCap:258, pe:18.4, forwardPE:11.5, pb:1.95, peg:1.4, roe:11.5, roic:8.4, opMargin:14.5, debtEquity:0.22, currentRatio:1.95, fcfPositive:true, fcfB:21.4, revenueGrowth5y:8.5, epsGrowth5y:5.4, dividendYield:1.05, rsi:62, sma50:105.40, sma200:88.50, high52w:118.40, low52w:68.50, shortInterest:2.8, floatM:2403, insider:'neutral', analyst:4.2, xtb:true, catalyst:'Cloud rebound + buyback program'},
+  {ticker:'JD', name:'JD.com Inc.', sector:'Consumo', exchange:'NASDAQ', price:42.40, change:1.25, marketCap:62, pe:11.5, forwardPE:9.2, pb:1.62, peg:1.4, roe:14.2, roic:11.5, opMargin:4.2, debtEquity:0.42, currentRatio:1.22, fcfPositive:true, fcfB:6.8, revenueGrowth5y:11.5, epsGrowth5y:18.4, dividendYield:1.85, rsi:58, sma50:40.40, sma200:32.40, high52w:48.50, low52w:24.40, shortInterest:3.2, floatM:1462, insider:'buy', analyst:3.8, xtb:true, catalyst:'Recovery consumo China + JD Logistics'},
+
+  // ===== ESPECULATIVAS / GROWTH RECOVERY (todas en XTB) =====
+  {ticker:'PLTR', name:'Palantir Technologies', sector:'Tecnología', exchange:'NYSE', price:42.40, change:2.85, marketCap:95, pe:218.5, forwardPE:142.4, pb:38.5, peg:6.8, roe:18.5, roic:14.2, opMargin:12.5, debtEquity:0.05, currentRatio:5.85, fcfPositive:true, fcfB:1.2, revenueGrowth5y:32.4, epsGrowth5y:null, dividendYield:0, rsi:72, sma50:38.40, sma200:28.50, high52w:48.40, low52w:18.50, shortInterest:3.2, floatM:2238, insider:'sell', analyst:3.0, xtb:true, catalyst:'AIP enterprise growth + DoD contracts'},
+  {ticker:'RIVN', name:'Rivian Automotive', sector:'Automotriz', exchange:'NASDAQ', price:13.40, change:3.85, marketCap:13.4, pe:null, forwardPE:null, pb:1.62, peg:null, roe:-58.4, roic:-32.5, opMargin:-42.5, debtEquity:0.65, currentRatio:3.18, fcfPositive:false, fcfB:-4.5, revenueGrowth5y:185.4, epsGrowth5y:null, dividendYield:0, rsi:62, sma50:12.40, sma200:14.50, high52w:18.50, low52w:8.50, shortInterest:14.2, floatM:1000, insider:'neutral', analyst:3.2, xtb:true, catalyst:'R2 launch + VW partnership $5B'},
+  {ticker:'LCID', name:'Lucid Group Inc.', sector:'Automotriz', exchange:'NASDAQ', price:3.20, change:-1.85, marketCap:7.2, pe:null, forwardPE:null, pb:1.42, peg:null, roe:-78.4, roic:-42.5, opMargin:-285.4, debtEquity:1.85, currentRatio:4.85, fcfPositive:false, fcfB:-2.4, revenueGrowth5y:285.4, epsGrowth5y:null, dividendYield:0, rsi:42, sma50:3.40, sma200:4.20, high52w:5.85, low52w:2.40, shortInterest:28.4, floatM:1485, insider:'buy', analyst:2.8, xtb:true, catalyst:'PIF backing + Gravity SUV launch'},
+  {ticker:'SOFI', name:'SoFi Technologies', sector:'Financiero', exchange:'NASDAQ', price:14.40, change:2.45, marketCap:15.8, pe:42.4, forwardPE:28.5, pb:1.85, peg:1.4, roe:4.5, roic:3.2, opMargin:8.4, debtEquity:0.85, currentRatio:null, fcfPositive:true, fcfB:0.42, revenueGrowth5y:32.4, epsGrowth5y:null, dividendYield:0, rsi:62, sma50:13.40, sma200:11.40, high52w:18.50, low52w:6.40, shortInterest:12.4, floatM:1080, insider:'neutral', analyst:3.6, xtb:true, catalyst:'Profitability inflection + Galileo growth'},
+  {ticker:'HOOD', name:'Robinhood Markets', sector:'Financiero', exchange:'NASDAQ', price:32.40, change:3.25, marketCap:28.4, pe:32.4, forwardPE:24.5, pb:5.42, peg:1.4, roe:14.5, roic:11.2, opMargin:24.5, debtEquity:0.05, currentRatio:18.5, fcfPositive:true, fcfB:1.4, revenueGrowth5y:48.5, epsGrowth5y:null, dividendYield:0, rsi:68, sma50:30.40, sma200:24.50, high52w:38.40, low52w:14.50, shortInterest:8.4, floatM:875, insider:'sell', analyst:3.4, xtb:true, catalyst:'Crypto + Gold/IRA growth'},
+  {ticker:'COIN', name:'Coinbase Global', sector:'Financiero', exchange:'NASDAQ', price:215.40, change:4.85, marketCap:55, pe:32.4, forwardPE:28.5, pb:4.85, peg:1.8, roe:18.5, roic:14.5, opMargin:32.4, debtEquity:0.42, currentRatio:1.85, fcfPositive:true, fcfB:2.4, revenueGrowth5y:48.5, epsGrowth5y:null, dividendYield:0, rsi:65, sma50:208.40, sma200:178.40, high52w:265.40, low52w:118.50, shortInterest:6.8, floatM:215, insider:'sell', analyst:3.4, xtb:true, catalyst:'BTC ETF + USDC market share'},
+
+  // ===== AÑADIDAS POR EL USUARIO =====
+  {ticker:'RDDT', name:'Reddit Inc.', sector:'Tecnología', exchange:'NYSE', price:168.40, change:1.85, marketCap:30.5, pe:88.4, forwardPE:42.5, pb:18.5, peg:2.4, roe:14.5, roic:8.4, opMargin:22.4, debtEquity:0.08, currentRatio:8.42, fcfPositive:true, fcfB:0.42, revenueGrowth5y:32.4, epsGrowth5y:null, dividendYield:0, rsi:65, sma50:158.40, sma200:145.20, high52w:218.20, low52w:95.20, shortInterest:8.4, floatM:158, insider:'sell', analyst:4.0, xtb:true, catalyst:'Data licensing IA + ARPU expansion'},
+  {ticker:'USAR', name:'USA Rare Earth Inc.', sector:'Materiales', exchange:'NASDAQ', price:24.40, change:-1.85, marketCap:2.85, pe:null, forwardPE:null, pb:8.5, peg:null, roe:-28.5, roic:-18.5, opMargin:-185.4, debtEquity:0.05, currentRatio:12.4, fcfPositive:false, fcfB:-0.32, revenueGrowth5y:null, epsGrowth5y:null, dividendYield:0, rsi:55, sma50:22.40, sma200:18.50, high52w:43.98, low52w:8.00, shortInterest:18.5, floatM:95, insider:'buy', analyst:4.2, xtb:true, catalyst:'Serra Verde acquisition + tierras raras estratégicas'},
+  {ticker:'RHI', name:'Robert Half Inc.', sector:'Servicios', exchange:'NYSE', price:52.40, change:0.85, marketCap:5.4, pe:22.4, forwardPE:18.5, pb:4.85, peg:2.4, roe:22.4, roic:18.5, opMargin:8.5, debtEquity:0.05, currentRatio:1.85, fcfPositive:true, fcfB:0.382, revenueGrowth5y:-2.4, epsGrowth5y:-8.4, dividendYield:4.42, rsi:42, sma50:55.40, sma200:62.40, high52w:78.40, low52w:45.20, shortInterest:3.2, floatM:102, insider:'buy', analyst:2.8, xtb:true, catalyst:'Labor market recovery + Protiviti AI growth'},
+  {ticker:'CRML', name:'Critical Metals Corp.', sector:'Materiales', exchange:'NASDAQ', price:4.20, change:3.85, marketCap:0.385, pe:null, forwardPE:null, pb:2.45, peg:null, roe:-42.5, roic:-22.5, opMargin:null, debtEquity:0.18, currentRatio:2.85, fcfPositive:false, fcfB:-0.045, revenueGrowth5y:null, epsGrowth5y:null, dividendYield:0, rsi:58, sma50:3.85, sma200:4.50, high52w:8.85, low52w:2.40, shortInterest:12.4, floatM:65, insider:'buy', analyst:3.0, xtb:true, catalyst:'Tanbreez Greenland + estrategia UE metales'},
+  {ticker:'JOBY', name:'Joby Aviation Inc.', sector:'Industrial', exchange:'NYSE', price:8.20, change:2.85, marketCap:6.45, pe:null, forwardPE:null, pb:4.85, peg:null, roe:-52.4, roic:-28.5, opMargin:null, debtEquity:0.18, currentRatio:7.85, fcfPositive:false, fcfB:-0.485, revenueGrowth5y:null, epsGrowth5y:null, dividendYield:0, rsi:62, sma50:7.85, sma200:6.85, high52w:12.40, low52w:4.85, shortInterest:14.2, floatM:605, insider:'neutral', analyst:3.4, xtb:true, catalyst:'FAA certification + Dubai/UAE eVTOL launch'},
+  {ticker:'AG', name:'First Majestic Silver', sector:'Materiales', exchange:'NYSE', price:7.85, change:1.42, marketCap:2.4, pe:null, forwardPE:18.5, pb:1.42, peg:null, roe:-12.4, roic:-4.8, opMargin:-8.4, debtEquity:0.35, currentRatio:2.18, fcfPositive:false, fcfB:-0.085, revenueGrowth5y:8.4, epsGrowth5y:null, dividendYield:0.12, rsi:62, sma50:7.20, sma200:6.85, high52w:9.85, low52w:4.85, shortInterest:4.5, floatM:305, insider:'neutral', analyst:3.0, xtb:true, catalyst:'Ciclo alcista plata + ramp producción'},
+  {ticker:'TNYA', name:'Tenaya Therapeutics', sector:'Salud', exchange:'NASDAQ', price:0.65, change:-2.85, marketCap:0.065, pe:null, forwardPE:null, pb:1.85, peg:null, roe:-85.4, roic:-45.8, opMargin:null, debtEquity:0.0, currentRatio:3.85, fcfPositive:false, fcfB:-0.085, revenueGrowth5y:null, epsGrowth5y:null, dividendYield:0, rsi:35, sma50:0.72, sma200:0.85, high52w:2.85, low52w:0.42, shortInterest:8.4, floatM:95, insider:'neutral', analyst:3.4, xtb:true, catalyst:'Phase 1b/2 readout cardiomiopatías'},
+  {ticker:'QFIN', name:'Qifu Technology', sector:'Financiero', exchange:'NASDAQ', price:38.40, change:1.45, marketCap:5.95, pe:5.85, forwardPE:5.2, pb:1.45, peg:0.55, roe:28.4, roic:22.4, opMargin:42.5, debtEquity:0.18, currentRatio:1.85, fcfPositive:true, fcfB:0.685, revenueGrowth5y:14.5, epsGrowth5y:18.4, dividendYield:5.85, rsi:62, sma50:36.40, sma200:32.85, high52w:42.40, low52w:22.85, shortInterest:3.85, floatM:130, insider:'neutral', analyst:4.2, xtb:true, catalyst:'Buyback agresivo + dividendo alto'},
+  {ticker:'RACE', name:'Ferrari N.V.', sector:'Automotriz', exchange:'NYSE', price:358.50, change:-1.45, marketCap:64, pe:33.45, forwardPE:32.4, pb:21.4, peg:2.6, roe:42.4, roic:22.5, opMargin:29.4, debtEquity:0.92, currentRatio:1.85, fcfPositive:true, fcfB:0.985, revenueGrowth5y:11.5, epsGrowth5y:14.5, dividendYield:1.27, rsi:52, sma50:348.40, sma200:415.20, high52w:519.10, low52w:312.51, shortInterest:1.4, floatM:178, insider:'neutral', analyst:4.0, xtb:true, catalyst:'F80 supercar + Ferrari eléctrico 2026'},
+  {ticker:'ACHR', name:'Archer Aviation Inc.', sector:'Industrial', exchange:'NYSE', price:9.85, change:2.25, marketCap:5.4, pe:null, forwardPE:null, pb:4.2, peg:null, roe:-42.5, roic:-28.5, opMargin:null, debtEquity:0.08, currentRatio:12.85, fcfPositive:false, fcfB:-0.385, revenueGrowth5y:null, epsGrowth5y:null, dividendYield:0, rsi:64, sma50:9.20, sma200:8.40, high52w:14.85, low52w:5.85, shortInterest:16.4, floatM:565, insider:'buy', analyst:3.6, xtb:true, catalyst:'FAA cert + UAE launch + Stellantis partnership'},
+  {ticker:'CPB', name:'The Campbell\'s Company', sector:'Consumo', exchange:'NYSE', price:38.40, change:-0.42, marketCap:11.5, pe:14.8, forwardPE:11.5, pb:4.85, peg:2.4, roe:32.4, roic:14.2, opMargin:14.5, debtEquity:1.85, currentRatio:0.65, fcfPositive:true, fcfB:1.2, revenueGrowth5y:4.2, epsGrowth5y:2.4, dividendYield:4.05, rsi:38, sma50:40.20, sma200:44.50, high52w:52.40, low52w:35.85, shortInterest:3.8, floatM:298, insider:'buy', analyst:3.2, xtb:true, catalyst:'Snyder\'s-Lance integration + cost cuts'}
+];
+
+/* ===== SCORING ENGINE ===== */
+
+function scoreValue(s) {
+  let score = 50;
+  const breakdown = [];
+
+  // P/E
+  if (s.pe && s.pe > 0) {
+    if (s.pe < 10) { score += 10; breakdown.push(['P/E muy bajo', 10, s.pe.toFixed(1)]); }
+    else if (s.pe < 15) { score += 7; breakdown.push(['P/E bajo', 7, s.pe.toFixed(1)]); }
+    else if (s.pe < 20) { score += 3; breakdown.push(['P/E razonable', 3, s.pe.toFixed(1)]); }
+    else if (s.pe > 35) { score -= 12; breakdown.push(['P/E muy alto', -12, s.pe.toFixed(1)]); }
+    else if (s.pe > 25) { score -= 6; breakdown.push(['P/E elevado', -6, s.pe.toFixed(1)]); }
+  } else {
+    breakdown.push(['Sin earnings positivos', -8, 'N/A']);
+    score -= 8;
+  }
+
+  // P/B
+  if (s.pb !== null && s.pb !== undefined && s.pb > 0) {
+    if (s.pb < 1) { score += 8; breakdown.push(['P/B < 1 (cotiza bajo libros)', 8, s.pb.toFixed(2)]); }
+    else if (s.pb < 2) { score += 4; breakdown.push(['P/B razonable', 4, s.pb.toFixed(2)]); }
+    else if (s.pb > 8) { score -= 6; breakdown.push(['P/B muy alto', -6, s.pb.toFixed(2)]); }
+  }
+
+  // PEG
+  if (s.peg) {
+    if (s.peg < 1) { score += 6; breakdown.push(['PEG < 1', 6, s.peg.toFixed(2)]); }
+    else if (s.peg > 2.5) { score -= 5; breakdown.push(['PEG alto', -5, s.peg.toFixed(2)]); }
+  }
+
+  // ROE
+  if (s.roe && s.roe > 0) {
+    if (s.roe > 20) { score += 8; breakdown.push(['ROE excelente', 8, s.roe.toFixed(1) + '%']); }
+    else if (s.roe > 12) { score += 5; breakdown.push(['ROE bueno', 5, s.roe.toFixed(1) + '%']); }
+  } else if (s.roe < 0) {
+    score -= 8; breakdown.push(['ROE negativo', -8, s.roe.toFixed(1) + '%']);
+  }
+
+  // Debt/Equity
+  if (s.debtEquity !== null && s.debtEquity > 0) {
+    if (s.debtEquity < 0.5) { score += 5; breakdown.push(['Deuda baja', 5, s.debtEquity.toFixed(2)]); }
+    else if (s.debtEquity > 2.5) { score -= 6; breakdown.push(['Deuda alta', -6, s.debtEquity.toFixed(2)]); }
+  }
+
+  // FCF
+  if (s.fcfPositive) {
+    score += 6;
+    breakdown.push(['FCF positivo', 6, '$' + s.fcfB.toFixed(1) + 'B']);
+  } else {
+    score -= 10;
+    breakdown.push(['FCF negativo', -10, '$' + s.fcfB.toFixed(1) + 'B']);
+  }
+
+  // Discount from 52w high
+  const discount = (s.high52w - s.price) / s.high52w * 100;
+  if (discount > 20 && discount < 45) {
+    score += 8;
+    breakdown.push(['Descuento óptimo desde máx 52w', 8, '-' + discount.toFixed(0) + '%']);
+  } else if (discount > 45) {
+    score += 3;
+    breakdown.push(['Caída fuerte (¿trampa?)', 3, '-' + discount.toFixed(0) + '%']);
+  } else if (discount < 5) {
+    score -= 4;
+    breakdown.push(['Cerca de máximos', -4, '-' + discount.toFixed(0) + '%']);
+  }
+
+  // RSI
+  if (s.rsi) {
+    if (s.rsi < 35) { score += 5; breakdown.push(['RSI en sobreventa', 5, s.rsi]); }
+    else if (s.rsi >= 35 && s.rsi <= 55) { score += 3; breakdown.push(['RSI saludable', 3, s.rsi]); }
+    else if (s.rsi > 75) { score -= 6; breakdown.push(['RSI sobrecompra', -6, s.rsi]); }
+  }
+
+  // Dividend
+  if (s.dividendYield > 4 && s.dividendYield < 9) {
+    score += 4;
+    breakdown.push(['Dividendo atractivo', 4, s.dividendYield.toFixed(2) + '%']);
+  }
+
+  // Insider buying
+  if (s.insider === 'buy') { score += 4; breakdown.push(['Insiders comprando', 4, '+']); }
+  else if (s.insider === 'sell') { score -= 3; breakdown.push(['Insiders vendiendo', -3, '-']); }
+
+  return { score: clamp(score), breakdown };
+}
+
+function scorePenny(s) {
+  let score = 40; // baseline lower for speculative
+  const breakdown = [];
+
+  // Price under $1 is the key signal for penny
+  if (s.price < 1) {
+    score += 5;
+    breakdown.push(['Precio < $1 (penny)', 5, '$' + s.price.toFixed(2)]);
+  } else if (s.price < 5) {
+    score += 2;
+    breakdown.push(['Bajo precio nominal', 2, '$' + s.price.toFixed(2)]);
+  }
+
+  // Short interest - high = squeeze potential
+  if (s.shortInterest > 20) {
+    score += 12;
+    breakdown.push(['Short interest muy alto', 12, s.shortInterest.toFixed(1) + '%']);
+  } else if (s.shortInterest > 12) {
+    score += 7;
+    breakdown.push(['Short interest alto', 7, s.shortInterest.toFixed(1) + '%']);
+  }
+
+  // Volume momentum (we'll use RSI as proxy here since we don't have live volume)
+  if (s.rsi > 60 && s.rsi < 75) {
+    score += 8;
+    breakdown.push(['Momentum técnico activo', 8, 'RSI ' + s.rsi]);
+  } else if (s.rsi > 75) {
+    score -= 5;
+    breakdown.push(['Sobrecompra inmediata', -5, 'RSI ' + s.rsi]);
+  } else if (s.rsi < 30) {
+    score += 5;
+    breakdown.push(['Sobreventa - posible rebote', 5, 'RSI ' + s.rsi]);
+  }
+
+  // Price above 50d MA = breakout
+  if (s.price > s.sma50 && s.sma50 > s.sma200) {
+    score += 10;
+    breakdown.push(['Patrón alcista (precio > SMA50 > SMA200)', 10, 'OK']);
+  } else if (s.price > s.sma50) {
+    score += 5;
+    breakdown.push(['Sobre SMA 50', 5, 'OK']);
+  }
+
+  // Float
+  if (s.floatM < 100) {
+    score += 8;
+    breakdown.push(['Float muy bajo (volátil)', 8, s.floatM + 'M']);
+  } else if (s.floatM < 250) {
+    score += 4;
+    breakdown.push(['Float bajo', 4, s.floatM + 'M']);
+  }
+
+  // FCF (rare positive in penny = huge plus)
+  if (s.fcfPositive) {
+    score += 12;
+    breakdown.push(['FCF positivo (raro en penny)', 12, '$' + s.fcfB.toFixed(2) + 'B']);
+  } else {
+    breakdown.push(['FCF negativo (riesgo dilución)', -3, '$' + s.fcfB.toFixed(2) + 'B']);
+    score -= 3;
+  }
+
+  // Catalyst flag
+  if (s.catalyst && s.catalyst.length > 5) {
+    score += 6;
+    breakdown.push(['Catalizador identificable', 6, '✓']);
+  }
+
+  // Insider buying = strong signal in penny
+  if (s.insider === 'buy') {
+    score += 10;
+    breakdown.push(['Insiders comprando', 10, '+']);
+  }
+
+  // Distance from 52w low (recovery potential)
+  const fromLow = (s.price - s.low52w) / s.low52w * 100;
+  if (fromLow < 30) {
+    score += 5;
+    breakdown.push(['Cerca del mínimo 52w', 5, '+' + fromLow.toFixed(0) + '%']);
+  }
+
+  return { score: clamp(score), breakdown };
+}
+
+function scoreSell(s) {
+  let score = 30;
+  const breakdown = [];
+
+  // High P/E
+  if (s.pe && s.pe > 0) {
+    if (s.pe > 50) { score += 18; breakdown.push(['P/E extremadamente alto', 18, s.pe.toFixed(1)]); }
+    else if (s.pe > 35) { score += 12; breakdown.push(['P/E muy alto', 12, s.pe.toFixed(1)]); }
+    else if (s.pe > 25) { score += 6; breakdown.push(['P/E elevado', 6, s.pe.toFixed(1)]); }
+  }
+
+  // P/B extreme
+  if (s.pb && s.pb > 10) {
+    score += 8;
+    breakdown.push(['P/B muy alto', 8, s.pb.toFixed(1)]);
+  }
+
+  // RSI overbought
+  if (s.rsi > 75) { score += 15; breakdown.push(['RSI sobrecompra severa', 15, s.rsi]); }
+  else if (s.rsi > 70) { score += 10; breakdown.push(['RSI sobrecompra', 10, s.rsi]); }
+  else if (s.rsi > 65) { score += 5; breakdown.push(['RSI alto', 5, s.rsi]); }
+
+  // Above SMA200
+  if (s.sma200 > 0) {
+    const aboveSma = (s.price - s.sma200) / s.sma200 * 100;
+    if (aboveSma > 40) { score += 12; breakdown.push(['Muy extendida sobre SMA200', 12, '+' + aboveSma.toFixed(0) + '%']); }
+    else if (aboveSma > 25) { score += 7; breakdown.push(['Extendida sobre SMA200', 7, '+' + aboveSma.toFixed(0) + '%']); }
+  }
+
+  // Near 52w high
+  const fromHigh = (s.high52w - s.price) / s.high52w * 100;
+  if (fromHigh < 5) {
+    score += 8;
+    breakdown.push(['En máximos 52w', 8, '-' + fromHigh.toFixed(1) + '%']);
+  } else if (fromHigh < 10) {
+    score += 4;
+    breakdown.push(['Cerca del máximo 52w', 4, '-' + fromHigh.toFixed(1) + '%']);
+  }
+
+  // Insider selling
+  if (s.insider === 'sell') {
+    score += 10;
+    breakdown.push(['Insiders vendiendo', 10, '-']);
+  }
+
+  // PEG high = growth not justifying price
+  if (s.peg && s.peg > 3) {
+    score += 6;
+    breakdown.push(['PEG alto (precio sin crecimiento)', 6, s.peg.toFixed(2)]);
+  }
+
+  return { score: clamp(score), breakdown };
+}
+
+function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+function getSignal(scoreVal, scoreSellVal) {
+  // Combine: if sell score is high, that overrides
+  if (scoreSellVal >= 70) return { label: 'VENDER FUERTE', class: 'strong-sell', tier: 'sell' };
+  if (scoreSellVal >= 55) return { label: 'VENDER', class: 'sell', tier: 'sell' };
+  if (scoreVal >= 75) return { label: 'COMPRAR FUERTE', class: 'strong-buy', tier: 'buy' };
+  if (scoreVal >= 60) return { label: 'COMPRAR', class: 'buy', tier: 'buy' };
+  if (scoreVal >= 45) return { label: 'MANTENER', class: 'hold', tier: 'hold' };
+  return { label: 'VENDER', class: 'sell', tier: 'sell' };
+}
+
+function getPennySignal(score) {
+  if (score >= 70) return { label: 'COMPRA ESPECULATIVA', class: 'strong-buy', tier: 'buy' };
+  if (score >= 55) return { label: 'OBSERVAR', class: 'buy', tier: 'buy' };
+  if (score >= 40) return { label: 'NEUTRAL', class: 'hold', tier: 'hold' };
+  return { label: 'EVITAR', class: 'sell', tier: 'sell' };
+}
+
+function classifyStock(s) {
+  // Penny / especulativa por precio bajo
+  if (s.price < 5) return 'penny';
+  // Especulativa por pérdidas + precio moderado (growth-recovery)
+  if (s.price < 20 && (!s.pe || s.pe <= 0 || (s.roe !== null && s.roe < 0))) return 'penny';
+
+  // Sobrevalorada por múltiplo o sobrecompra
+  if (s.marketCap > 100 && s.pe && (s.pe > 35 || (s.rsi && s.rsi > 70))) return 'sell';
+  return 'value';
+}
+
+/* ===== LIVE DATA OVERLAY =====
+   Cuando hay datos en vivo de la API, se mezclan sobre el snapshot.
+   Estructura: { ticker: { price, change, marketCap, pe, pb, ... } }
+*/
+let liveData = JSON.parse(localStorage.getItem('bursascan_live') || '{}');
+let liveDataTimestamp = parseInt(localStorage.getItem('bursascan_live_ts') || '0');
+let apiKey = localStorage.getItem('bursascan_api_key') || '';
+
+function computeEnriched() {
+  return STOCKS.map(s => {
+    // Merge live data over snapshot data
+    const live = liveData[s.ticker];
+    const merged = live ? { ...s, ...live, _live: true } : { ...s };
+
+    const v = scoreValue(merged);
+    const p = scorePenny(merged);
+    const sl = scoreSell(merged);
+    const category = classifyStock(merged);
+    let primaryScore, signal;
+    if (category === 'penny') {
+      primaryScore = p.score;
+      signal = getPennySignal(p.score);
+    } else if (category === 'sell') {
+      primaryScore = sl.score;
+      signal = { label: sl.score >= 65 ? 'VENDER FUERTE' : 'VENDER', class: sl.score >= 65 ? 'strong-sell' : 'sell', tier: 'sell' };
+    } else {
+      primaryScore = v.score;
+      signal = getSignal(v.score, sl.score);
+    }
+    return { ...merged, valueScore: v, pennyScore: p, sellScore: sl, primaryScore, signal, category };
+  });
+}
+
+let enriched = computeEnriched();
+
+/* ===== STATE ===== */
+let state = {
+  view: 'dashboard',
+  filterSignal: 'all',
+  filterXtb: 'yes',
+  search: '',
+  sortBy: 'score',
+  sortDir: 'desc',
+  watchlist: JSON.parse(localStorage.getItem('bursascan_watchlist') || '[]')
+};
+
+/* ===== RENDER ===== */
+function render() {
+  // Hide all views
+  document.getElementById('view-stocks').classList.add('hidden');
+  document.getElementById('view-methodology').classList.add('hidden');
+  document.getElementById('view-api').classList.add('hidden');
+  document.getElementById('view-glossary').classList.add('hidden');
+
+  // Active nav
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === state.view);
+  });
+
+  const titles = {
+    dashboard: ['Dashboard', 'Vista general de señales en todo el universo escaneado'],
+    value: ['Acciones value', 'Empresas sólidas cotizando con descuento atractivo'],
+    penny: ['Especulativas / Recovery', 'Acciones de alto riesgo con potencial de repunte fuerte'],
+    sell: ['Sobrevaloradas', 'Señales de venta — acciones caras o sobrecompradas'],
+    watchlist: ['Mi watchlist', 'Acciones que has marcado para seguir'],
+    methodology: ['Metodología', 'Cómo se calculan los scores y señales'],
+    api: ['Conectar datos en vivo', 'Convertir la app en escáner real con APIs'],
+    glossary: ['Glosario', 'Todos los términos explicados']
+  };
+  document.getElementById('page-title').textContent = titles[state.view][0];
+  document.getElementById('page-subtitle').textContent = titles[state.view][1];
+
+  if (['methodology','api','glossary'].includes(state.view)) {
+    document.getElementById('view-' + state.view).classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('view-stocks').classList.remove('hidden');
+  renderStats();
+  renderTable();
+}
+
+/* ===== CHART RENDERERS (SVG nativo) ===== */
+
+function renderScoreHistogram(stocks) {
+  // 5 buckets: 0-20, 20-40, 40-60, 60-80, 80-100
+  const buckets = [0, 0, 0, 0, 0];
+  const labels = ['Vender fuerte', 'Vender', 'Mantener', 'Comprar', 'Comprar fuerte'];
+  const colors = ['#ff3366', '#ef4444', '#f59e0b', '#22c55e', '#00ff88'];
+
+  stocks.forEach(s => {
+    const idx = Math.min(4, Math.floor(s.primaryScore / 20));
+    buckets[idx]++;
+  });
+
+  const max = Math.max(...buckets, 1);
+  const barHeight = 26;
+  const gap = 6;
+  const labelWidth = 130;
+  const barAreaWidth = 220;
+  const valueWidth = 30;
+  const totalH = 5 * (barHeight + gap);
+  const totalW = labelWidth + barAreaWidth + valueWidth;
+
+  let svg = `<svg viewBox="0 0 ${totalW} ${totalH}" preserveAspectRatio="xMidYMid meet" style="max-width:100%;height:auto">`;
+  buckets.forEach((count, i) => {
+    const y = i * (barHeight + gap);
+    const w = (count / max) * barAreaWidth;
+    svg += `
+      <text x="0" y="${y + barHeight/2 + 4}" fill="#9ba3b4" font-size="11" font-family="JetBrains Mono, monospace">${labels[i]}</text>
+      <rect x="${labelWidth}" y="${y}" width="${barAreaWidth}" height="${barHeight}" rx="4" fill="#1a1f2e"/>
+      <rect x="${labelWidth}" y="${y}" width="${w}" height="${barHeight}" rx="4" fill="${colors[i]}" opacity="0.85"/>
+      <text x="${labelWidth + barAreaWidth + 8}" y="${y + barHeight/2 + 4}" fill="#e8eaed" font-size="13" font-family="JetBrains Mono, monospace" font-weight="600">${count}</text>
+    `;
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+function renderSectorDonut(stocks) {
+  // Count by sector
+  const counts = {};
+  stocks.forEach(s => {
+    counts[s.sector] = (counts[s.sector] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const total = stocks.length;
+
+  // Color palette for sectors (cycling)
+  const colors = ['#00d9ff', '#22c55e', '#f59e0b', '#ef4444', '#a78bfa', '#fbbf24', '#06b6d4', '#ec4899', '#84cc16', '#f97316'];
+
+  const cx = 60, cy = 60, rOuter = 56, rInner = 36;
+  let angle = -Math.PI / 2;
+  let paths = '';
+  const legendItems = [];
+
+  entries.forEach((e, i) => {
+    const [sector, count] = e;
+    const slice = (count / total) * Math.PI * 2;
+    const a1 = angle;
+    const a2 = angle + slice;
+    const x1Out = cx + Math.cos(a1) * rOuter;
+    const y1Out = cy + Math.sin(a1) * rOuter;
+    const x2Out = cx + Math.cos(a2) * rOuter;
+    const y2Out = cy + Math.sin(a2) * rOuter;
+    const x1In = cx + Math.cos(a2) * rInner;
+    const y1In = cy + Math.sin(a2) * rInner;
+    const x2In = cx + Math.cos(a1) * rInner;
+    const y2In = cy + Math.sin(a1) * rInner;
+    const largeArc = slice > Math.PI ? 1 : 0;
+    const color = colors[i % colors.length];
+
+    paths += `<path d="M ${x1Out} ${y1Out} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2Out} ${y2Out} L ${x1In} ${y1In} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x2In} ${y2In} Z" fill="${color}" opacity="0.9"/>`;
+    legendItems.push({ sector, count, color });
+    angle = a2;
+  });
+
+  const svg = `
+    <div class="donut-wrap">
+      <svg viewBox="0 0 120 120" width="120" height="120" style="flex-shrink:0">
+        ${paths}
+        <text x="60" y="58" text-anchor="middle" fill="#e8eaed" font-size="20" font-family="Bricolage Grotesque, sans-serif" font-weight="700">${total}</text>
+        <text x="60" y="72" text-anchor="middle" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" letter-spacing="1">STOCKS</text>
+      </svg>
+      <div class="donut-legend">
+        ${legendItems.slice(0, 7).map(it => `
+          <div class="donut-legend-item">
+            <div class="donut-legend-dot" style="background:${it.color}"></div>
+            <div>${it.sector}</div>
+            <div class="donut-legend-count">${it.count}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  return svg;
+}
+
+function renderRangeBar(stock) {
+  const { low52w, high52w, price, sma50, sma200 } = stock;
+  const W = 360, H = 80;
+  const padL = 12, padR = 12;
+  const barY = 32, barH = 14;
+  const innerW = W - padL - padR;
+  const range = high52w - low52w;
+  const pct = v => padL + ((v - low52w) / range) * innerW;
+
+  const pricePos = pct(price);
+  const sma50Pos = sma50 ? pct(sma50) : null;
+  const sma200Pos = sma200 ? pct(sma200) : null;
+  const fromHighPct = ((high52w - price) / high52w * 100).toFixed(1);
+
+  return `<svg class="range-bar-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+    <!-- Background bar with gradient: red zone (low) to green zone (high) -->
+    <defs>
+      <linearGradient id="rangeBg" x1="0" x2="1">
+        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.25"/>
+        <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#22c55e" stop-opacity="0.25"/>
+      </linearGradient>
+    </defs>
+    <rect x="${padL}" y="${barY}" width="${innerW}" height="${barH}" rx="${barH/2}" fill="#1a1f2e"/>
+    <rect x="${padL}" y="${barY}" width="${innerW}" height="${barH}" rx="${barH/2}" fill="url(#rangeBg)"/>
+
+    <!-- Labels: low and high -->
+    <text x="${padL}" y="${barY - 8}" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" letter-spacing="1">MÍN 52S</text>
+    <text x="${padL}" y="${barY + barH + 16}" fill="#9ba3b4" font-size="11" font-family="JetBrains Mono, monospace" font-weight="600">$${low52w.toFixed(2)}</text>
+    <text x="${W - padR}" y="${barY - 8}" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" letter-spacing="1" text-anchor="end">MÁX 52S</text>
+    <text x="${W - padR}" y="${barY + barH + 16}" fill="#9ba3b4" font-size="11" font-family="JetBrains Mono, monospace" font-weight="600" text-anchor="end">$${high52w.toFixed(2)}</text>
+
+    <!-- SMA200 marker -->
+    ${sma200Pos !== null ? `
+      <line x1="${sma200Pos}" y1="${barY - 4}" x2="${sma200Pos}" y2="${barY + barH + 4}" stroke="#5c6578" stroke-width="2" stroke-dasharray="2,2"/>
+      <text x="${sma200Pos}" y="${H - 4}" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" text-anchor="middle">SMA200</text>
+    ` : ''}
+
+    <!-- SMA50 marker -->
+    ${sma50Pos !== null && Math.abs(sma50Pos - (sma200Pos || -999)) > 25 ? `
+      <line x1="${sma50Pos}" y1="${barY - 4}" x2="${sma50Pos}" y2="${barY + barH + 4}" stroke="#9ba3b4" stroke-width="2" stroke-dasharray="2,2"/>
+      <text x="${sma50Pos}" y="${H - 4}" fill="#9ba3b4" font-size="9" font-family="JetBrains Mono, monospace" text-anchor="middle">SMA50</text>
+    ` : ''}
+
+    <!-- Current price marker (circle + line above) -->
+    <line x1="${pricePos}" y1="${barY - 14}" x2="${pricePos}" y2="${barY + barH + 4}" stroke="#00d9ff" stroke-width="2"/>
+    <circle cx="${pricePos}" cy="${barY + barH/2}" r="7" fill="#00d9ff" stroke="#0a0d14" stroke-width="2"/>
+    <text x="${pricePos}" y="${barY - 18}" fill="#00d9ff" font-size="12" font-family="JetBrains Mono, monospace" font-weight="700" text-anchor="middle">$${price.toFixed(2)}</text>
+  </svg>
+  <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:6px;">−${fromHighPct}% desde máximo · ${((price-low52w)/range*100).toFixed(0)}% del rango</div>`;
+}
+
+function renderRsiGauge(rsi) {
+  const W = 160, H = 110;
+  const cx = W / 2, cy = 90;
+  const r = 68;
+
+  // Semicircle from 180° to 0° (left to right, top half)
+  // Arc represents 0-100 RSI
+  // Zones: 0-30 green (oversold), 30-70 gray, 70-100 red (overbought)
+
+  const rsiToAngle = v => Math.PI - (v / 100) * Math.PI; // 180° (PI) to 0°
+  const polar = (a, radius = r) => [cx + Math.cos(a) * radius, cy - Math.sin(a) * radius];
+
+  const arc = (startV, endV, color, strokeW = 14) => {
+    const a1 = rsiToAngle(startV);
+    const a2 = rsiToAngle(endV);
+    const [x1, y1] = polar(a1);
+    const [x2, y2] = polar(a2);
+    const large = Math.abs(a1 - a2) > Math.PI ? 1 : 0;
+    return `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round"/>`;
+  };
+
+  // Background full arc
+  const bgArc = arc(0, 100, '#1a1f2e');
+  // Zones
+  const oversoldArc = arc(0, 30, '#22c55e');
+  const neutralArc = arc(30, 70, '#5c6578');
+  const overboughtArc = arc(70, 100, '#ef4444');
+
+  // Pointer
+  const ptAngle = rsiToAngle(rsi);
+  const [ptX, ptY] = polar(ptAngle, r);
+  const [innerX, innerY] = polar(ptAngle, r - 22);
+
+  // Color based on zone
+  let rsiColor = '#5c6578';
+  let rsiZone = 'Neutral';
+  if (rsi < 30) { rsiColor = '#22c55e'; rsiZone = 'Sobreventa'; }
+  else if (rsi > 70) { rsiColor = '#ef4444'; rsiZone = 'Sobrecompra'; }
+  else if (rsi > 60) { rsiColor = '#f59e0b'; rsiZone = 'Alto'; }
+  else if (rsi < 40) { rsiColor = '#f59e0b'; rsiZone = 'Bajo'; }
+
+  return `<svg class="rsi-gauge-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+    ${bgArc}
+    ${oversoldArc}
+    ${neutralArc}
+    ${overboughtArc}
+    <line x1="${innerX}" y1="${innerY}" x2="${ptX}" y2="${ptY}" stroke="${rsiColor}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="6" fill="${rsiColor}"/>
+    <text x="${cx}" y="${cy - 12}" text-anchor="middle" fill="${rsiColor}" font-size="22" font-family="JetBrains Mono, monospace" font-weight="700">${rsi}</text>
+    <text x="${cx}" y="${cy + 6}" text-anchor="middle" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" letter-spacing="1">RSI</text>
+    <text x="10" y="${cy + 18}" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace">0</text>
+    <text x="${W-10}" y="${cy + 18}" text-anchor="end" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace">100</text>
+  </svg>
+  <div style="text-align:center;font-size:11px;color:${rsiColor};font-family:var(--font-mono);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:600;">${rsiZone}</div>`;
+}
+
+function renderTriScore(v, p, sl) {
+  // Three vertical bars for the three scores
+  const W = 160, H = 110;
+  const barW = 32;
+  const gap = 16;
+  const barAreaH = 70;
+  const labels = ['VALUE', 'SPEC', 'VEND'];
+  const scores = [v, p, sl];
+  const startX = (W - (barW * 3 + gap * 2)) / 2;
+
+  let svg = `<svg class="triscore-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+  scores.forEach((score, i) => {
+    const x = startX + i * (barW + gap);
+    const h = (score / 100) * barAreaH;
+    const y = 10 + barAreaH - h;
+    let color = '#5c6578';
+    if (i === 2) { // sell — high = bad
+      color = score > 65 ? '#ef4444' : score > 45 ? '#f59e0b' : '#5c6578';
+    } else {
+      color = score > 65 ? '#22c55e' : score > 45 ? '#f59e0b' : '#ef4444';
+    }
+    svg += `
+      <rect x="${x}" y="10" width="${barW}" height="${barAreaH}" rx="4" fill="#1a1f2e"/>
+      <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="${color}" opacity="0.9"/>
+      <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" fill="#e8eaed" font-size="12" font-family="JetBrains Mono, monospace" font-weight="700">${score}</text>
+      <text x="${x + barW/2}" y="${H - 4}" text-anchor="middle" fill="#5c6578" font-size="9" font-family="JetBrains Mono, monospace" letter-spacing="0.5">${labels[i]}</text>
+    `;
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+function renderStats() {
+  const all = enriched;
+  const buyCount = all.filter(s => s.signal.tier === 'buy').length;
+  const holdCount = all.filter(s => s.signal.tier === 'hold').length;
+  const sellCount = all.filter(s => s.signal.tier === 'sell').length;
+  const avgScore = Math.round(all.reduce((sum, s) => sum + s.primaryScore, 0) / all.length);
+
+  const stats = [
+    { label: 'Total escaneadas', value: all.length, sub: 'NYSE + NASDAQ', cls: 'accent' },
+    { label: 'Señal de compra', value: buyCount, sub: 'Score > 60', cls: 'buy' },
+    { label: 'Mantener', value: holdCount, sub: 'Esperar mejor punto', cls: 'hold' },
+    { label: 'Señal de venta', value: sellCount, sub: 'Caras o débiles', cls: 'sell' }
+  ];
+
+  document.getElementById('stats').innerHTML = stats.map(s => `
+    <div class="stat-card ${s.cls}">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${s.value}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>
+  `).join('');
+
+  // Charts on dashboard (respetan view actual + filtro XTB)
+  let chartStocks = all;
+  if (state.view === 'value') chartStocks = chartStocks.filter(s => s.category === 'value');
+  else if (state.view === 'penny') chartStocks = chartStocks.filter(s => s.category === 'penny');
+  else if (state.view === 'sell') chartStocks = chartStocks.filter(s => s.category === 'sell');
+  else if (state.view === 'watchlist') chartStocks = chartStocks.filter(s => state.watchlist.includes(s.ticker));
+  if (state.filterXtb === 'yes') chartStocks = chartStocks.filter(s => s.xtb);
+
+  document.getElementById('charts-grid').innerHTML = chartStocks.length === 0 ? '' : `
+    <div class="chart-card">
+      <div class="chart-title">
+        <span>Distribución de señales</span>
+        <span style="color:var(--text-secondary)">${chartStocks.length} acciones</span>
+      </div>
+      <div class="chart-svg-wrap">${renderScoreHistogram(chartStocks)}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">
+        <span>Sectores</span>
+      </div>
+      ${renderSectorDonut(chartStocks)}
+    </div>
+  `;
+
+  // Update sidebar counts
+  document.getElementById('count-all').textContent = all.length;
+  document.getElementById('count-value').textContent = all.filter(s => s.category === 'value').length;
+  document.getElementById('count-penny').textContent = all.filter(s => s.category === 'penny').length;
+  document.getElementById('count-sell').textContent = all.filter(s => s.category === 'sell').length;
+  document.getElementById('count-watch').textContent = state.watchlist.length;
+
+  // Update hero banner counters
+  const heroBuyCount = all.filter(s => s.signal.tier === 'buy' || s.signal.tier === 'strong-buy').length;
+  const hEl = document.getElementById('hero-buy');
+  const wEl = document.getElementById('hero-watch');
+  const tEl = document.getElementById('hero-total');
+  if (hEl) hEl.textContent = heroBuyCount;
+  if (wEl) wEl.textContent = state.watchlist.length;
+  if (tEl) tEl.textContent = all.length;
+}
+
+function getFilteredStocks() {
+  let list = [...enriched];
+
+  // View filter
+  if (state.view === 'value') list = list.filter(s => s.category === 'value');
+  else if (state.view === 'penny') list = list.filter(s => s.category === 'penny');
+  else if (state.view === 'sell') list = list.filter(s => s.category === 'sell');
+  else if (state.view === 'watchlist') list = list.filter(s => state.watchlist.includes(s.ticker));
+
+  // Signal filter
+  if (state.filterSignal !== 'all') {
+    list = list.filter(s => s.signal.tier === state.filterSignal);
+  }
+
+  // XTB — en watchlist se muestran TODAS las acciones guardadas sin importar XTB
+  if (state.filterXtb === 'yes' && state.view !== 'watchlist') {
+    list = list.filter(s => s.xtb);
+  }
+
+  // Search
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    list = list.filter(s =>
+      s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  list.sort((a, b) => {
+    let va, vb;
+    if (state.sortBy === 'score') { va = a.primaryScore; vb = b.primaryScore; }
+    else if (state.sortBy === 'price') { va = a.price; vb = b.price; }
+    else if (state.sortBy === 'change') { va = a.change; vb = b.change; }
+    else if (state.sortBy === 'pe') { va = a.pe || 9999; vb = b.pe || 9999; }
+    else if (state.sortBy === 'marketCap') { va = a.marketCap; vb = b.marketCap; }
+    else va = vb = 0;
+    return state.sortDir === 'desc' ? vb - va : va - vb;
+  });
+
+  return list;
+}
+
+function renderTable() {
+  const list = getFilteredStocks();
+  const tbody = document.getElementById('stock-tbody');
+  const empty = document.getElementById('empty');
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  tbody.innerHTML = list.map(s => {
+    const isFav = state.watchlist.includes(s.ticker);
+    const tagClass = s.category === 'penny' ? 'penny' : s.category === 'sell' ? 'sell' : 'value';
+    const tagLabel = s.category === 'penny' ? 'Penny' : s.category === 'sell' ? 'Cara' : 'Value';
+    const scoreColor = scoreToColor(s.primaryScore);
+
+    return `
+      <tr onclick="openModal('${s.ticker}')">
+        <td>
+          <div class="cell-ticker">
+            <span class="ticker">${s.ticker}</span>
+            <span class="company-name">${s.name}</span>
+          </div>
+        </td>
+        <td><span class="cell-price">$${s.price.toFixed(2)}</span></td>
+        <td><span class="cell-change ${s.change >= 0 ? 'up' : 'down'}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</span></td>
+        <td>
+          <div class="score-cell">
+            <div class="score-bar"><div class="score-fill" style="width:${s.primaryScore}%; background:${scoreColor}"></div></div>
+            <span class="score-num">${s.primaryScore}</span>
+            <span class="signal ${s.signal.class}">${s.signal.label}</span>
+          </div>
+        </td>
+        <td><span class="tag ${tagClass}">${tagLabel}</span></td>
+        <td><span style="font-family:var(--font-mono);font-size:12px;">${s.pe ? s.pe.toFixed(1) : '—'}</span></td>
+        <td><span style="font-family:var(--font-mono);font-size:12px;">${formatCap(s.marketCap)}</span></td>
+        <td>${s.xtb ? '<span class="xtb-yes">✓</span>' : '<span class="xtb-no">—</span>'}</td>
+        <td>
+          <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav('${s.ticker}')">${isFav ? '★' : '☆'}</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function scoreToColor(score) {
+  if (score >= 75) return 'var(--buy-strong)';
+  if (score >= 60) return 'var(--buy)';
+  if (score >= 45) return 'var(--hold)';
+  if (score >= 30) return 'var(--sell)';
+  return 'var(--sell-strong)';
+}
+
+function formatCap(cap) {
+  if (cap >= 1) return '$' + cap.toFixed(1) + 'B';
+  return '$' + (cap * 1000).toFixed(0) + 'M';
+}
+
+/* ===== MODAL ===== */
+function openModal(ticker) {
+  const s = enriched.find(x => x.ticker === ticker);
+  if (!s) return;
+
+  const scoreColor = scoreToColor(s.primaryScore);
+  const v = s.valueScore;
+  const p = s.pennyScore;
+  const sl = s.sellScore;
+
+  // Build verdict text
+  let verdictText = '';
+  if (s.signal.tier === 'buy' && s.category === 'value') {
+    verdictText = 'Empresa sólida con métricas value atractivas. El score sugiere que la valoración actual es un punto de entrada razonable. Confirma con el desglose de factores.';
+  } else if (s.signal.tier === 'buy' && s.category === 'penny') {
+    verdictText = 'Especulativa con setup favorable (alto riesgo). Solo arriesga capital que puedas perder. Posición pequeña, stop loss claro.';
+  } else if (s.signal.tier === 'hold') {
+    verdictText = 'Sin señal clara. La valoración es razonable pero no destaca. Esperar mejor precio o nuevo catalizador.';
+  } else if (s.signal.tier === 'sell' && s.category === 'sell') {
+    verdictText = 'Valoración elevada y/o sobrecompra técnica. Si la tienes, considera tomar ganancias o ajustar stop loss. Si no, evita perseguir el precio.';
+  } else {
+    verdictText = 'Múltiples banderas rojas. Mejor evitar o salir.';
+  }
+
+  const showBreakdown = s.category === 'penny' ? p.breakdown : (s.category === 'sell' ? sl.breakdown : v.breakdown);
+  const breakdownTitle = s.category === 'penny' ? 'Factores del score Penny' : s.category === 'sell' ? 'Factores del score Vender' : 'Factores del score Value';
+
+  const html = `
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-ticker">${s.ticker}</div>
+        <div class="modal-company">${s.name}</div>
+        <div class="modal-meta">
+          <div class="modal-meta-item"><strong>${s.sector}</strong></div>
+          <div class="modal-meta-item"><strong>${s.exchange}</strong></div>
+          <div class="modal-meta-item">Cap: <strong>${formatCap(s.marketCap)}</strong></div>
+          <div class="modal-meta-item">XTB: <strong>${s.xtb ? '✓ Disponible' : '✗ No disponible'}</strong></div>
+        </div>
+      </div>
+      <div class="modal-price-block">
+        <div class="modal-price">$${s.price.toFixed(2)}</div>
+        <div class="modal-change ${s.change >= 0 ? 'up' : 'down'}" style="color:${s.change >= 0 ? 'var(--buy)' : 'var(--sell)'}">
+          ${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="verdict-block">
+        <div class="verdict-score">
+          <div class="score-circle" style="--score:${s.primaryScore}; --score-color:${scoreColor}">
+            <div class="score-circle-inner">${s.primaryScore}</div>
+          </div>
+          <div class="verdict-label">SCORE / 100</div>
+        </div>
+        <div class="verdict-info">
+          <div class="verdict-text">
+            <span class="signal ${s.signal.class}" style="font-size:13px;padding:6px 12px;">${s.signal.label}</span>
+          </div>
+          <div class="verdict-detail">${verdictText}</div>
+          ${s.catalyst ? `<div class="verdict-detail" style="margin-top:8px;color:var(--accent);"><strong>Catalizador:</strong> ${s.catalyst}</div>` : ''}
+        </div>
+      </div>
+
+      <!-- VISUAL CHARTS -->
+      <div class="stock-charts">
+        <div class="stock-chart-card">
+          <div class="stock-chart-label">Posición en rango 52 semanas</div>
+          ${renderRangeBar(s)}
+        </div>
+        <div class="stock-chart-card">
+          <div class="stock-chart-label">RSI (técnico)</div>
+          ${renderRsiGauge(s.rsi)}
+        </div>
+        <div class="stock-chart-card">
+          <div class="stock-chart-label">Los 3 scores</div>
+          ${renderTriScore(v.score, p.score, sl.score)}
+        </div>
+      </div>
+
+      <div class="modal-section-title">Valoración</div>
+      <div class="metrics-grid">
+        ${metric('P/E', s.pe, s.pe ? s.pe.toFixed(1) : '—', v => v && v > 0 && v < 15 ? 'good' : v && v > 30 ? 'bad' : '', 'Precio dividido por ganancias por acción. < 15 económico, > 25 caro.')}
+        ${metric('P/B', s.pb, s.pb ? s.pb.toFixed(2) : '—', v => v && v < 1 ? 'good' : v && v > 5 ? 'bad' : '', 'Precio sobre valor contable. < 1 cotiza bajo activos netos.')}
+        ${metric('PEG', s.peg, s.peg ? s.peg.toFixed(2) : '—', v => v && v < 1 ? 'good' : v && v > 2 ? 'bad' : '', 'P/E ajustado por crecimiento. < 1 atractivo.')}
+        ${metric('Forward P/E', s.forwardPE, s.forwardPE ? s.forwardPE.toFixed(1) : '—', v => v && v < 15 ? 'good' : v && v > 30 ? 'bad' : '', 'P/E basado en ganancias estimadas próximo año.')}
+        ${metric('Dividend Yield', s.dividendYield, (s.dividendYield || 0).toFixed(2) + '%', v => v > 4 ? 'good' : '', 'Rendimiento anual del dividendo. > 4% atractivo si es sostenible.')}
+        ${metric('Market Cap', s.marketCap, formatCap(s.marketCap), () => '', 'Tamaño total de la empresa: precio × acciones en circulación.')}
+      </div>
+
+      <div class="modal-section-title">Calidad y salud financiera</div>
+      <div class="metrics-grid">
+        ${metric('ROE', s.roe, (s.roe || 0).toFixed(1) + '%', v => v > 15 ? 'good' : v < 0 ? 'bad' : '', 'Retorno sobre patrimonio. > 15% empresa eficiente.')}
+        ${metric('ROIC', s.roic, (s.roic || 0).toFixed(1) + '%', v => v > 10 ? 'good' : v < 0 ? 'bad' : '', 'Retorno sobre capital invertido. > 10% buena señal.')}
+        ${metric('Margen operativo', s.opMargin, (s.opMargin || 0).toFixed(1) + '%', v => v > 20 ? 'good' : v < 0 ? 'bad' : '', 'Ganancia operativa / ingresos.')}
+        ${metric('Deuda/Patrimonio', s.debtEquity, s.debtEquity ? s.debtEquity.toFixed(2) : '—', v => v && v < 0.5 ? 'good' : v && v > 2 && v > 0 ? 'bad' : '', '< 1 saludable; > 2 riesgoso.')}
+        ${metric('Current Ratio', s.currentRatio, s.currentRatio ? s.currentRatio.toFixed(2) : '—', v => v && v > 1.5 ? 'good' : v && v < 1 ? 'warn' : '', '> 1.5 puede pagar deudas de corto plazo.')}
+        ${metric('FCF', s.fcfB, '$' + (s.fcfB || 0).toFixed(2) + 'B', v => v > 0 ? 'good' : 'bad', 'Free Cash Flow: caja real después de gastos de capital.')}
+      </div>
+
+      <div class="modal-section-title">Crecimiento</div>
+      <div class="metrics-grid">
+        ${metric('Revenue Growth 5a', s.revenueGrowth5y, (s.revenueGrowth5y || 0).toFixed(1) + '%', v => v > 8 ? 'good' : v < 0 ? 'bad' : '', 'Crecimiento anual de ingresos últimos 5 años.')}
+        ${metric('EPS Growth 5a', s.epsGrowth5y, s.epsGrowth5y !== null ? (s.epsGrowth5y || 0).toFixed(1) + '%' : '—', v => v && v > 10 ? 'good' : v < 0 ? 'bad' : '', 'Crecimiento anual de ganancia por acción 5 años.')}
+        ${metric('Analyst Rating', s.analyst, (s.analyst || 0).toFixed(1) + '/5', v => v > 4 ? 'good' : v < 3 ? 'bad' : '', 'Rating promedio analistas (1=Strong Sell, 5=Strong Buy).')}
+      </div>
+
+      <div class="modal-section-title">Técnico</div>
+      <div class="metrics-grid">
+        ${metric('RSI', s.rsi, s.rsi, v => v >= 30 && v <= 55 ? 'good' : v > 70 ? 'bad' : v < 30 ? 'warn' : '', 'Relative Strength Index 0-100. >70 sobrecompra, <30 sobreventa.')}
+        ${metric('SMA 50d', s.sma50, '$' + s.sma50.toFixed(2), () => '', 'Media móvil simple 50 días.')}
+        ${metric('SMA 200d', s.sma200, '$' + s.sma200.toFixed(2), () => '', 'Media móvil simple 200 días.')}
+        ${metric('Máximo 52sem', s.high52w, '$' + s.high52w.toFixed(2), () => '', 'Precio máximo últimos 12 meses.')}
+        ${metric('Mínimo 52sem', s.low52w, '$' + s.low52w.toFixed(2), () => '', 'Precio mínimo últimos 12 meses.')}
+        ${metric('Desde máximo', null, '-' + ((s.high52w - s.price) / s.high52w * 100).toFixed(1) + '%', () => '', 'Caída desde el máximo de 52 semanas.')}
+      </div>
+
+      <div class="modal-section-title">Especulativo (sentiment)</div>
+      <div class="metrics-grid">
+        ${metric('Short Interest', s.shortInterest, (s.shortInterest || 0).toFixed(1) + '%', v => v > 20 ? 'warn' : '', '% del float vendido en corto. >20% puede gatillar squeeze.')}
+        ${metric('Float', s.floatM, s.floatM + 'M', v => v < 100 ? 'warn' : '', 'Acciones disponibles para tradear. Float bajo = más volátil.')}
+        ${metric('Insider Activity', null, s.insider === 'buy' ? 'Comprando ✓' : s.insider === 'sell' ? 'Vendiendo ✗' : 'Neutral', () => s.insider === 'buy' ? 'good' : s.insider === 'sell' ? 'bad' : '', 'Actividad neta de insiders en últimos 90 días.')}
+      </div>
+
+      <div class="modal-section-title">${breakdownTitle}</div>
+      <div class="score-breakdown">
+        ${showBreakdown.map(([factor, impact, detail]) => `
+          <div class="breakdown-row">
+            <div class="breakdown-factor">${factor}</div>
+            <div class="breakdown-detail">${detail}</div>
+            <div class="breakdown-impact ${impact > 0 ? 'pos' : impact < 0 ? 'neg' : 'neu'}">${impact > 0 ? '+' : ''}${impact}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="margin-top:24px;padding:16px;background:var(--bg-elevated);border-radius:10px;font-size:12px;color:var(--text-tertiary);line-height:1.6;">
+        <strong style="color:var(--text-secondary);">Importante:</strong> Esta no es una recomendación financiera. Los scores son cálculos matemáticos basados en métricas estándar de mercado. Antes de operar verifica los datos en fuente oficial (página de relaciones con inversionistas de la empresa, SEC EDGAR), considera tu situación personal, y consulta con un asesor si necesitas. Datos en vivo solo si conectaste API en la pestaña <em>Conectar datos en vivo</em>.
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
+}
+
+function metric(label, val, display, colorFn, tooltip) {
+  const cls = val !== null && val !== undefined ? colorFn(val) : '';
+  return `
+    <div class="metric">
+      <div class="metric-label">
+        ${label}
+        <span class="help-icon" data-tooltip="${tooltip}">?</span>
+      </div>
+      <div class="metric-value ${cls}">${display}</div>
+    </div>
+  `;
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ===== FAV / WATCHLIST ===== */
+function toggleFav(ticker) {
+  if (state.watchlist.includes(ticker)) {
+    state.watchlist = state.watchlist.filter(t => t !== ticker);
+  } else {
+    state.watchlist.push(ticker);
+  }
+  localStorage.setItem('bursascan_watchlist', JSON.stringify(state.watchlist));
+  render();
+}
+
+/* ===== EVENTS ===== */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    state.view = item.dataset.view;
+    render();
+    document.getElementById('sidebar').classList.remove('open');
+  });
+});
+
+document.querySelectorAll('.filter-chip[data-signal]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip[data-signal]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.filterSignal = chip.dataset.signal;
+    renderTable();
+  });
+});
+
+document.querySelectorAll('.filter-chip[data-xtb]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip[data-xtb]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.filterXtb = chip.dataset.xtb;
+    renderStats();
+    renderTable();
+  });
+});
+
+document.getElementById('search').addEventListener('input', (e) => {
+  state.search = e.target.value;
+  renderTable();
+});
+
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const sortBy = th.dataset.sort;
+    if (state.sortBy === sortBy) {
+      state.sortDir = state.sortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      state.sortBy = sortBy;
+      state.sortDir = 'desc';
+    }
+    renderTable();
+  });
+});
+
+/* ===================================================================
+   LIVE DATA INTEGRATION (Finnhub API)
+   =================================================================== */
+
+const API_BASE = 'https://finnhub.io/api/v1';
+
+/* Mapea respuesta Finnhub al schema interno */
+function mapFinnhub(ticker, quote, profile, metric) {
+  const m = (metric && metric.metric) || {};
+  const result = {};
+
+  if (quote && typeof quote.c === 'number' && quote.c > 0) {
+    result.price = quote.c;
+    result.change = typeof quote.dp === 'number' ? quote.dp : 0;
+  }
+
+  if (profile && profile.marketCapitalization) {
+    result.marketCap = profile.marketCapitalization / 1000; // Finnhub returns in millions, we use billions
+    if (profile.name) result.name = profile.name;
+  }
+
+  // Métricas fundamentales — Finnhub usa varios nombres; tomamos el primero disponible
+  const pickNum = (...keys) => {
+    for (const k of keys) {
+      const v = m[k];
+      if (typeof v === 'number' && !isNaN(v) && isFinite(v)) return v;
+    }
+    return null;
+  };
+
+  const pe = pickNum('peBasicExclExtraTTM', 'peNormalizedAnnual', 'peTTM', 'peExclExtraTTM');
+  if (pe !== null && pe > 0) result.pe = pe;
+
+  const forwardPE = pickNum('forwardPE', 'forwardPe');
+  if (forwardPE !== null && forwardPE > 0) result.forwardPE = forwardPE;
+
+  const pb = pickNum('pbAnnual', 'pbQuarterly', 'priceToBookAnnual');
+  if (pb !== null && pb > 0) result.pb = pb;
+
+  const peg = pickNum('pegRatioAnnual', 'pegRatio', 'pegRatioTTM');
+  if (peg !== null && peg > 0) result.peg = peg;
+
+  const roe = pickNum('roeTTM', 'roeRfy', 'roe5Y');
+  if (roe !== null) result.roe = roe;
+
+  const roic = pickNum('roiTTM', 'roiAnnual', 'roi5Y');
+  if (roic !== null) result.roic = roic;
+
+  const opMargin = pickNum('operatingMarginTTM', 'operatingMarginAnnual');
+  if (opMargin !== null) result.opMargin = opMargin;
+
+  const debtEquity = pickNum('totalDebt/totalEquityAnnual', 'totalDebt/totalEquityQuarterly', 'longTermDebt/equityAnnual');
+  if (debtEquity !== null) result.debtEquity = debtEquity;
+
+  const currentRatio = pickNum('currentRatioAnnual', 'currentRatioQuarterly');
+  if (currentRatio !== null) result.currentRatio = currentRatio;
+
+  const divYield = pickNum('currentDividendYieldTTM', 'dividendYieldIndicatedAnnual');
+  if (divYield !== null) result.dividendYield = divYield;
+
+  const high52w = pickNum('52WeekHigh');
+  if (high52w !== null && high52w > 0) result.high52w = high52w;
+
+  const low52w = pickNum('52WeekLow');
+  if (low52w !== null && low52w > 0) result.low52w = low52w;
+
+  const epsGrowth5y = pickNum('epsGrowth5Y', 'epsGrowth5YearAnnual');
+  if (epsGrowth5y !== null) result.epsGrowth5y = epsGrowth5y;
+
+  const revenueGrowth5y = pickNum('revenueGrowth5Y', 'revenueGrowth5YearAnnual');
+  if (revenueGrowth5y !== null) result.revenueGrowth5y = revenueGrowth5y;
+
+  return result;
+}
+
+/* Fetch para un ticker con timeout y manejo de error */
+async function fetchTickerData(ticker, key) {
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 10000);
+
+  try {
+    const [quoteRes, profileRes, metricRes] = await Promise.all([
+      fetch(`${API_BASE}/quote?symbol=${ticker}&token=${key}`, { signal: ctrl.signal }),
+      fetch(`${API_BASE}/stock/profile2?symbol=${ticker}&token=${key}`, { signal: ctrl.signal }),
+      fetch(`${API_BASE}/stock/metric?symbol=${ticker}&metric=all&token=${key}`, { signal: ctrl.signal })
+    ]);
+
+    if (quoteRes.status === 401 || profileRes.status === 401 || metricRes.status === 401) {
+      throw new Error('API key inválida');
+    }
+    if (quoteRes.status === 429 || profileRes.status === 429 || metricRes.status === 429) {
+      throw new Error('Rate limit alcanzado');
+    }
+
+    const [quote, profile, metric] = await Promise.all([quoteRes.json(), profileRes.json(), metricRes.json()]);
+    clearTimeout(timeout);
+    return mapFinnhub(ticker, quote, profile, metric);
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+/* Probar la API key con un ticker */
+async function testApi() {
+  const input = document.getElementById('api-key-input');
+  const key = input.value.trim() || apiKey;
+  if (!key) {
+    showStatus('Introduce primero tu API key', 'error');
+    return;
+  }
+  showStatus('Probando con AAPL...', '');
+  try {
+    const r = await fetch(`${API_BASE}/quote?symbol=AAPL&token=${key}`);
+    const data = await r.json();
+    if (r.status === 401 || data.error) {
+      showStatus('❌ API key inválida', 'error');
+    } else if (data.c && data.c > 0) {
+      showStatus(`✅ Funciona — AAPL actual: $${data.c.toFixed(2)}`, 'success');
+    } else {
+      showStatus('⚠️ Respuesta inesperada. Verifica la key.', 'error');
+    }
+  } catch (e) {
+    showStatus('❌ Error de red: ' + e.message, 'error');
+  }
+}
+
+function connectApi() {
+  const input = document.getElementById('api-key-input');
+  const key = input.value.trim();
+  if (!key) {
+    showStatus('Pega primero tu API key', 'error');
+    return;
+  }
+  apiKey = key;
+  localStorage.setItem('bursascan_api_key', key);
+  showStatus('✅ API conectada. Pulsa "Actualizar" arriba para traer datos en vivo.', 'success');
+  updateApiUI();
+}
+
+function disconnectApi() {
+  apiKey = '';
+  localStorage.removeItem('bursascan_api_key');
+  document.getElementById('api-key-input').value = '';
+  showStatus('API desconectada. Los datos volverán al snapshot al limpiar caché.', '');
+  updateApiUI();
+}
+
+function clearLiveCache() {
+  liveData = {};
+  liveDataTimestamp = 0;
+  localStorage.removeItem('bursascan_live');
+  localStorage.removeItem('bursascan_live_ts');
+  enriched = computeEnriched();
+  updateTimestampUI();
+  render();
+  showStatus('Caché limpio. Datos vuelven a SNAPSHOT.', 'success');
+}
+
+function showStatus(msg, cls) {
+  const el = document.getElementById('connect-status');
+  el.style.display = 'flex';
+  el.textContent = msg;
+  el.className = 'connect-status' + (cls ? ' ' + cls : '');
+}
+
+function updateApiUI() {
+  const input = document.getElementById('api-key-input');
+  const discBtn = document.getElementById('disconnect-btn');
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (apiKey) {
+    if (input) input.value = '••••••••' + apiKey.slice(-4);
+    if (discBtn) discBtn.style.display = 'inline-block';
+    if (refreshBtn) refreshBtn.style.display = 'flex';
+  } else {
+    if (input) input.value = '';
+    if (discBtn) discBtn.style.display = 'none';
+    if (refreshBtn) refreshBtn.style.display = 'none';
+  }
+}
+
+function updateTimestampUI() {
+  const pill = document.getElementById('timestamp-pill');
+  const text = document.getElementById('timestamp-text');
+  if (liveDataTimestamp && Object.keys(liveData).length > 0) {
+    pill.classList.add('live');
+    const date = new Date(liveDataTimestamp);
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const MM = String(date.getMonth() + 1).padStart(2, '0');
+    text.textContent = `LIVE · ${dd}/${MM} ${hh}:${mm}`;
+  } else {
+    pill.classList.remove('live');
+    text.textContent = 'DATA: SNAPSHOT';
+  }
+}
+
+/* Refresh principal */
+async function refreshLiveData() {
+  if (!apiKey) {
+    alert('Conecta primero una API key en la pestaña "Conectar datos en vivo"');
+    return;
+  }
+
+  const overlay = document.getElementById('fetch-overlay');
+  const statusEl = document.getElementById('fetch-status');
+  const fillEl = document.getElementById('progress-fill');
+  const countEl = document.getElementById('progress-count');
+  const etaEl = document.getElementById('progress-eta');
+  const logEl = document.getElementById('fetch-log');
+  const refreshBtn = document.getElementById('refresh-btn');
+  const refreshIcon = document.getElementById('refresh-icon');
+
+  overlay.classList.add('show');
+  logEl.innerHTML = '';
+  refreshBtn.disabled = true;
+  refreshIcon.classList.add('spin');
+
+  const tickers = STOCKS.map(s => s.ticker);
+  const total = tickers.length;
+  let completed = 0;
+  let succeeded = 0;
+  let failed = 0;
+  const newLiveData = { ...liveData };
+  const startTime = Date.now();
+
+  statusEl.textContent = 'Conectando con Finnhub...';
+  countEl.textContent = `0 / ${total}`;
+
+  // Procesamos secuencial con throttle (~1 stock por 1.2s = 50 stocks/min, dentro del rate limit de 60/min)
+  // 3 calls/stock = 90 calls. A 1.2s/stock = 36 seg total.
+  for (const ticker of tickers) {
+    statusEl.textContent = `Trayendo ${ticker}...`;
+    try {
+      const data = await fetchTickerData(ticker, apiKey);
+      if (data.price) {
+        newLiveData[ticker] = data;
+        succeeded++;
+        logEl.insertAdjacentHTML('afterbegin', `<div><span class="ok">✓</span> ${ticker} · $${data.price.toFixed(2)} (${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%)</div>`);
+      } else {
+        failed++;
+        logEl.insertAdjacentHTML('afterbegin', `<div><span class="err">⚠</span> ${ticker} sin datos válidos</div>`);
+      }
+    } catch (e) {
+      failed++;
+      logEl.insertAdjacentHTML('afterbegin', `<div><span class="err">✗</span> ${ticker} — ${e.message}</div>`);
+      if (e.message.includes('inválida') || e.message.includes('401')) {
+        statusEl.textContent = 'API key inválida — proceso detenido';
+        break;
+      }
+      if (e.message.includes('Rate limit')) {
+        statusEl.textContent = 'Rate limit alcanzado — esperando 60s...';
+        await new Promise(r => setTimeout(r, 60000));
+      }
+    }
+
+    completed++;
+    const pct = (completed / total) * 100;
+    fillEl.style.width = pct + '%';
+    countEl.textContent = `${completed} / ${total}`;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const eta = elapsed / completed * (total - completed);
+    etaEl.textContent = `~${Math.ceil(eta)}s restantes`;
+
+    // Throttle: 1.2s entre tickers para mantener ~50 stocks/min
+    if (completed < total) await new Promise(r => setTimeout(r, 1200));
+  }
+
+  // Guardar
+  liveData = newLiveData;
+  liveDataTimestamp = Date.now();
+  localStorage.setItem('bursascan_live', JSON.stringify(liveData));
+  localStorage.setItem('bursascan_live_ts', String(liveDataTimestamp));
+
+  enriched = computeEnriched();
+  updateTimestampUI();
+  render();
+
+  statusEl.textContent = `✅ Listo: ${succeeded} OK, ${failed} fallaron`;
+  refreshBtn.disabled = false;
+  refreshIcon.classList.remove('spin');
+
+  setTimeout(() => overlay.classList.remove('show'), 1500);
+}
+
+/* ===== INIT ===== */
+updateApiUI();
+updateTimestampUI();
+render();
+</script>
+</body>
+</html>
